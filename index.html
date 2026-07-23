@@ -177,14 +177,9 @@ model-viewer{
 .step h3{font-size:clamp(23px,2.9vw,34px); text-transform:uppercase; margin-bottom:9px}
 .step p{font-size:15.5px; max-width:44ch}
 
-/* ---------- explode stage: roof stacked over chassis ---------- */
+/* ---------- explode stage: one model, roof node lifted by scroll ---------- */
 .explode-stage{position:relative; overflow:hidden}
-.layer{position:absolute; inset:0}
-.layer model-viewer{width:100%; height:100%}
-/* the roof sits on top and is translated upward as the section scrolls */
-.lift{z-index:3; will-change:transform; pointer-events:none}
-.lift model-viewer{pointer-events:none}
-.base{z-index:2}
+.explode-stage model-viewer{width:100%; height:100%}
 
 /* ---------- telemetry readout strip ---------- */
 .telem{
@@ -265,10 +260,7 @@ model-viewer{
   .row{grid-template-columns:44px 1fr; gap:16px}
   .row p{grid-column:2}
   .mini-stage{height:48svh}
-  /* pinned sections unpin on mobile: show the halves side by side, no lift */
   .explode-stage{height:52svh}
-  .layer{position:relative; height:50%}
-  .lift{transform:none!important}
   .hud{display:none}
   .wrap{padding:0 20px}
   .band{padding:78px 0}
@@ -278,7 +270,6 @@ model-viewer{
   html{scroll-behavior:auto}
   .reveal{opacity:1; transform:none}
   .step{opacity:1}
-  .lift{transform:none!important}
 }
 </style>
 </head>
@@ -392,32 +383,20 @@ model-viewer{
 <div class="pin-wrap" id="explodeWrap">
   <div class="pin">
     <div class="wrap pin-inner">
-      <!-- both halves live in ONE stage: the roof lifts off the chassis on scroll -->
+      <!-- ONE model containing both halves: real proportions are preserved.
+           The roof is a named node ("RoofGroup") we translate on scroll. -->
       <div class="pin-stage explode-stage">
         <span class="corner tl"></span><span class="corner tr"></span>
         <span class="corner bl"></span><span class="corner br"></span>
 
-        <div class="layer base">
-          <model-viewer id="mvOpen"
-            src="models/car2.glb"
-            alt="Нижняя часть машины с электроникой"
-            camera-controls disable-zoom interaction-prompt="none"
-            shadow-intensity="1" exposure="1.05" environment-image="neutral"
-            camera-orbit="18deg 64deg 105%" field-of-view="30deg"
-            min-camera-orbit="auto 15deg auto" max-camera-orbit="auto 78deg auto">
-          </model-viewer>
-        </div>
-
-        <div class="layer lift" id="lift">
-          <model-viewer id="mvRoof"
-            src="models/car3.glb"
-            alt="Съёмная крыша корпуса"
-            camera-controls disable-zoom interaction-prompt="none"
-            shadow-intensity="0" exposure="1.1" environment-image="neutral"
-            camera-orbit="18deg 64deg 105%" field-of-view="30deg"
-            min-camera-orbit="auto 15deg auto" max-camera-orbit="auto 78deg auto">
-          </model-viewer>
-        </div>
+        <model-viewer id="mvAsm"
+          src="models/assembly.glb"
+          alt="Машина со снимающейся крышей"
+          camera-controls disable-zoom interaction-prompt="none"
+          shadow-intensity="1" exposure="1.05" environment-image="neutral"
+          camera-orbit="18deg 68deg 105%" field-of-view="30deg"
+          min-camera-orbit="auto 15deg auto" max-camera-orbit="auto 78deg auto">
+        </model-viewer>
 
         <div class="stage-tag">Корпус&nbsp;<b id="liftOut">закрыт</b></div>
       </div>
@@ -590,35 +569,46 @@ model-viewer{
 
   /* ---------- explode section: roof lifts off the chassis ---------- */
   var exWrap = document.getElementById('explodeWrap');
-  var lift = document.getElementById('lift');
   var liftOut = document.getElementById('liftOut');
-  var mvOpen = document.getElementById('mvOpen');
-  var mvRoof = document.getElementById('mvRoof');
+  var mvAsm = document.getElementById('mvAsm');
   var exSteps = Array.prototype.slice.call(document.querySelectorAll('.step[data-ex]'));
 
-  /* The roof layer ignores pointer events, so the visitor always grabs the
-     chassis underneath. Mirror its camera onto the roof so the two halves
-     stay locked together while being rotated. */
-  if (mvOpen && mvRoof) {
-    mvOpen.addEventListener('camera-change', function(){
-      try {
-        mvRoof.setAttribute('camera-orbit', mvOpen.getCameraOrbit().toString());
-        if (mvRoof.jumpCameraToGoal) mvRoof.jumpCameraToGoal();
-      } catch(e){}
-    });
+  /* Both halves live in one glTF, so their real proportions are preserved.
+     Reach into the scene graph (documented FAQ pattern) and translate the
+     "RoofGroup" node, then ask model-viewer to re-render. */
+  var roofNode = null, roofY0 = 0, roofSpan = 1;
+
+  function grabRoof(){
+    if (!mvAsm || roofNode) return;
+    try {
+      var sym = Object.getOwnPropertySymbols(mvAsm)
+                      .find(function(s){ return s.description === 'scene'; });
+      var scene = sym ? mvAsm[sym] : null;
+      if (!scene || typeof scene.traverse !== 'function') return;
+      scene.traverse(function(o){ if (o.name === 'RoofGroup') roofNode = o; });
+      if (roofNode) {
+        roofY0 = roofNode.position.y;
+        var dim = mvAsm.getDimensions ? mvAsm.getDimensions() : null;
+        roofSpan = (dim && dim.y) ? dim.y : 1;
+        onExplode();
+      }
+    } catch (e) { /* internal API — degrade to a static model */ }
   }
+  if (mvAsm) mvAsm.addEventListener('load', grabRoof);
 
   function onExplode(){
-    if (!exWrap || !lift) return;
+    if (!exWrap) return;
     var r = exWrap.getBoundingClientRect();
     var total = r.height - window.innerHeight;
     var p = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 0;
 
-    /* ease the lift so it settles instead of tracking scroll linearly */
+    /* ease so the roof settles instead of tracking scroll linearly */
     var e = p < .5 ? 2*p*p : 1 - Math.pow(-2*p + 2, 2) / 2;
-    var stage = exWrap.querySelector('.explode-stage');
-    var travel = stage ? stage.clientHeight * 0.34 : 180;
-    lift.style.transform = 'translateY(' + (-e * travel).toFixed(1) + 'px)';
+
+    if (roofNode && !reduce) {
+      roofNode.position.y = roofY0 + e * roofSpan * 0.75;
+      if (mvAsm.queueRender) mvAsm.queueRender();
+    }
 
     if (liftOut) liftOut.textContent = p < .04 ? 'закрыт' : (p > .92 ? 'открыт' : 'снимается');
 
