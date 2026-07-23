@@ -179,8 +179,11 @@ model-viewer{
 
 /* ---------- explode stage: centred car + callout labels ---------- */
 .pin-wrap.tall{height:460svh}
+/* this section needs more horizontal room: the car sits centre stage and the
+   callout labels park against the left/right edges */
+.pin-wrap.tall .wrap{max-width:1660px; padding:0 40px}
 .explode-stage{
-  position:relative; width:100%; height:min(80svh,760px);
+  position:relative; width:100%; height:min(82svh,820px);
   border:1px solid var(--rule); border-radius:2px; background:
     radial-gradient(ellipse at 50% 58%, rgba(76,201,240,.10), transparent 62%), var(--panel);
 }
@@ -450,7 +453,7 @@ model-viewer{
           alt="Машина со снимающейся крышей и подписями узлов"
           camera-controls disable-zoom interaction-prompt="none"
           shadow-intensity="1" exposure="1.05" environment-image="neutral"
-          camera-orbit="18deg 68deg 100%" field-of-view="30deg"
+          camera-orbit="22deg 66deg 92%" field-of-view="26deg" bounds="tight"
           min-camera-orbit="auto 15deg auto" max-camera-orbit="auto 78deg auto">
 
           <button class="hs" slot="hotspot-pi"  data-position="-0.0227m -0.0044m 0.0336m" data-normal="0m 1m 0m" data-visibility-attribute="visible"></button>
@@ -693,10 +696,11 @@ model-viewer{
   /* Keep asking for frames while the section is moving: queueRender alone can be
      dropped once the renderer has parked the element. */
   var asmPumpUntil = 0, asmPumping = false;
+  var infoActive = false;
   function pumpAsm(){
     if (!asmPumping) return;
     repaintAsm();
-    drawCallouts();
+    if (infoActive) drawCallouts();
     if (performance.now() < asmPumpUntil) requestAnimationFrame(pumpAsm);
     else asmPumping = false;
   }
@@ -727,18 +731,24 @@ model-viewer{
     var parts = [];
     callouts.forEach(function(el){
       var key = el.getAttribute('data-for');
-      var hs = mvAsm.queryHotspot('hotspot-' + key);
-      if (!hs || !hs.canvasPosition) { el.classList.remove('on'); return; }
-      var x = hs.canvasPosition.x * sx + dx;
-      var y = hs.canvasPosition.y * sy + dy;
-      if (!isFinite(x) || !isFinite(y)) { el.classList.remove('on'); return; }
-
       var side = CALLOUT_SIDES[key] || 'right';
       var lx = side === 'right' ? W - 24 : 24;
       var ly = H * (CALLOUT_LANE[key] || 0.5);
+
+      /* park the label first so it never animates in from a stale spot */
       el.style.left = lx + 'px';
       el.style.top = ly + 'px';
       el.style.transform = 'translate(' + (side === 'right' ? '-100%' : '0') + ',-50%)';
+
+      /* a leader without its label is a wire into empty space: only draw it
+         once the label it points at has actually been revealed */
+      if (!el.classList.contains('on')) return;
+
+      var hs = mvAsm.queryHotspot('hotspot-' + key);
+      if (!hs || !hs.canvasPosition) return;
+      var x = hs.canvasPosition.x * sx + dx;
+      var y = hs.canvasPosition.y * sy + dy;
+      if (!isFinite(x) || !isFinite(y)) return;
 
       /* elbow: run out horizontally from the part, then into the label edge */
       var edgeX = side === 'right' ? lx - el.offsetWidth - 10 : lx + el.offsetWidth + 10;
@@ -780,11 +790,13 @@ model-viewer{
       kickAsm();
     }
 
-    if (exStage) exStage.classList.toggle('stage-lit', pInfo > 0.05);
+    infoActive = pInfo > 0.02;
+    if (exStage) exStage.classList.toggle('stage-lit', infoActive);
     callouts.forEach(function(el, i){
-      el.classList.toggle('on', pInfo > 0.12 + i * 0.16);
+      el.classList.toggle('on', pInfo > 0.06 + i * 0.14);
     });
-    if (pInfo > 0.05) drawCallouts();
+    if (infoActive) drawCallouts();
+    else if (calloutSvg) calloutSvg.innerHTML = '';
 
     var phase = pInfo > 0.05 ? 2 : (pFade > 0.05 ? 1 : 0);
     if (phase !== lastPhase) {
