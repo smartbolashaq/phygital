@@ -469,7 +469,7 @@ model-viewer{
           <button class="hs" slot="hotspot-cam" data-position="0.0003m 0.0638m -0.2222m" data-normal="0m 1m 0m" data-visibility-attribute="visible"></button>
           <button class="hs" slot="hotspot-irrx" data-position="-0.0007m 0.0244m -0.1979m" data-normal="0m 1m 0m" data-visibility-attribute="visible"></button>
           <button class="hs" slot="hotspot-irtx" data-position="-0.0003m 0.0185m 0.1770m" data-normal="0m 1m 0m" data-visibility-attribute="visible"></button>
-          <button class="hs" slot="hotspot-ant" data-position="-0.0011m 0.0077m 0.1282m" data-normal="0m 1m 0m" data-visibility-attribute="visible"></button>
+          <button class="hs" slot="hotspot-ant" data-position="-0.0722m 0.0081m 0.1281m" data-normal="0m 1m 0m" data-visibility-attribute="visible"></button>
           <button class="hs" slot="hotspot-pwr" data-position="0.0326m -0.0112m -0.0520m" data-normal="0m 1m 0m" data-visibility-attribute="visible"></button>
         </model-viewer>
 
@@ -853,11 +853,19 @@ model-viewer{
     if (roofNode && !reduce) {
       roofNode.position.y = roofY0 + e * roofSpan * 0.75;
       roofNode.updateMatrixWorld(true);
-      roofNode.visible = pFade < 1;
+      /* Only switch the roof into transparent rendering while it is actually
+         fading. Flagging it transparent at full opacity disables depth writes,
+         so its own polygons sort badly and show through each other — that was
+         the flickering/see-through artefact before the roof vanished. */
+      var fading = pFade > 0.001 && pFade < 0.999;
+      roofNode.visible = pFade < 0.999;
       roofMats.forEach(function(m){
-        m.transparent = true;
-        m.opacity = 1 - pFade;
-        m.depthWrite = pFade < 0.5;
+        if (m.transparent !== fading) {
+          m.transparent = fading;
+          m.depthWrite = !fading;
+          m.needsUpdate = true;     // material recompiles when this flag flips
+        }
+        m.opacity = fading ? (1 - pFade) : 1;
       });
       repaintAsm();
       kickAsm();
