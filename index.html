@@ -197,23 +197,25 @@ model-viewer{
 .stage-lit .hs{opacity:1}
 
 .callout-lines{position:absolute; inset:0; pointer-events:none; z-index:4}
-.callout-lines line{stroke:var(--signal); stroke-width:1; opacity:.55}
+.callout-lines line,
+.callout-lines polyline{stroke:var(--signal); stroke-width:1; opacity:.55; fill:none}
 .callout-lines circle{fill:var(--signal)}
 
 .callouts{position:absolute; inset:0; pointer-events:none; z-index:5}
 .callout{
   position:absolute; opacity:0; transform:translateY(6px);
   transition:opacity .45s ease, transform .45s ease;
-  background:rgba(8,9,15,.86); border:1px solid var(--rule);
-  border-left:2px solid var(--signal); padding:9px 13px; border-radius:2px;
-  max-width:230px; backdrop-filter:blur(3px);
+  background:rgba(8,9,15,.9); border:1px solid var(--rule);
+  border-left:2px solid var(--signal); padding:10px 14px; border-radius:2px;
+  width:max-content; max-width:230px; backdrop-filter:blur(3px);
 }
 .callout b{
   display:block; font-family:var(--disp); font-size:15px; letter-spacing:.01em;
   text-transform:uppercase; color:var(--text); margin-bottom:3px;
+  white-space:nowrap;
 }
 .callout span{
-  display:block; font-family:var(--mono); font-size:11px; line-height:1.45;
+  display:block; font-family:var(--mono); font-size:11px; line-height:1.5;
   color:var(--muted);
 }
 .callout.on{opacity:1; transform:none}
@@ -451,9 +453,9 @@ model-viewer{
           camera-orbit="18deg 68deg 100%" field-of-view="30deg"
           min-camera-orbit="auto 15deg auto" max-camera-orbit="auto 78deg auto">
 
-          <button class="hs" slot="hotspot-pi"  data-position="6.5011m 0.0367m 2.2013m" data-normal="0m 1m 0m"></button>
-          <button class="hs" slot="hotspot-ard" data-position="6.4897m 0.0441m 2.1167m" data-normal="0m 1m 0m"></button>
-          <button class="hs" slot="hotspot-cam" data-position="6.5241m 0.1049m 1.9455m" data-normal="0m 1m 0m"></button>
+          <button class="hs" slot="hotspot-pi"  data-position="-0.0227m -0.0044m 0.0336m" data-normal="0m 1m 0m" data-visibility-attribute="visible"></button>
+          <button class="hs" slot="hotspot-ard" data-position="-0.0341m 0.0030m -0.0510m" data-normal="0m 1m 0m" data-visibility-attribute="visible"></button>
+          <button class="hs" slot="hotspot-cam" data-position="0.0003m 0.0638m -0.2222m" data-normal="0m 1m 0m" data-visibility-attribute="visible"></button>
         </model-viewer>
 
         <!-- callout overlay: SVG lines + labels, positioned from hotspot pixels -->
@@ -662,12 +664,20 @@ model-viewer{
       roofY0 = roofNode.position.y;
       var dim = mvAsm.getDimensions ? mvAsm.getDimensions() : null;
       roofSpan = (dim && dim.y) ? dim.y : 1;
-      /* collect the roof's materials once so fading doesn't touch the chassis */
+      /* glTF reuses material objects: the body paint on the roof is the SAME
+         object as on the chassis. Mutating opacity directly would fade the whole
+         car, so give the roof its own clones first. */
       roofNode.traverse(function(o){
         if (!o.material) return;
-        (Array.isArray(o.material) ? o.material : [o.material]).forEach(function(m){
-          if (roofMats.indexOf(m) === -1) roofMats.push(m);
-        });
+        if (Array.isArray(o.material)) {
+          o.material = o.material.map(function(m){
+            var c = m.clone(); roofMats.push(c); return c;
+          });
+        } else {
+          var c = o.material.clone();
+          roofMats.push(c);
+          o.material = c;
+        }
       });
       onExplode();
     } catch (e) { /* internal API — degrade to a static model */ }
@@ -696,7 +706,9 @@ model-viewer{
   }
 
   /* Project each hotspot to pixels and draw a line to its label. */
+  /* fixed vertical lanes keep labels from stacking on top of each other */
   var CALLOUT_SIDES = { pi:'right', ard:'left', cam:'right' };
+  var CALLOUT_LANE  = { cam:0.26,  ard:0.46,   pi:0.66 };
   function drawCallouts(){
     if (!mvAsm || !exStage || !calloutSvg || !mvAsm.queryHotspot) return;
     var W = exStage.clientWidth, H = exStage.clientHeight;
@@ -721,18 +733,21 @@ model-viewer{
       var y = hs.canvasPosition.y * sy + dy;
       if (!isFinite(x) || !isFinite(y)) { el.classList.remove('on'); return; }
 
-      /* park the label near the edge, vertically aligned with its part */
       var side = CALLOUT_SIDES[key] || 'right';
-      var lx = side === 'right' ? W * 0.80 : W * 0.20;
-      var ly = Math.max(40, Math.min(H - 40, y));
+      var lx = side === 'right' ? W - 24 : 24;
+      var ly = H * (CALLOUT_LANE[key] || 0.5);
       el.style.left = lx + 'px';
       el.style.top = ly + 'px';
-      el.style.transform = 'translate(' + (side === 'right' ? '0' : '-100%') + ',-50%)';
+      el.style.transform = 'translate(' + (side === 'right' ? '-100%' : '0') + ',-50%)';
 
-      var elbowX = side === 'right' ? lx - 14 : lx + 14;
+      /* elbow: run out horizontally from the part, then into the label edge */
+      var edgeX = side === 'right' ? lx - el.offsetWidth - 10 : lx + el.offsetWidth + 10;
       parts.push(
-        '<line x1="' + x.toFixed(1) + '" y1="' + y.toFixed(1) +
-        '" x2="' + elbowX.toFixed(1) + '" y2="' + ly.toFixed(1) + '"/>' +
+        '<polyline points="' +
+          x.toFixed(1) + ',' + y.toFixed(1) + ' ' +
+          edgeX.toFixed(1) + ',' + y.toFixed(1) + ' ' +
+          edgeX.toFixed(1) + ',' + ly.toFixed(1) +
+        '" fill="none"/>' +
         '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="2.5"/>');
     });
     calloutSvg.innerHTML = parts.join('');
