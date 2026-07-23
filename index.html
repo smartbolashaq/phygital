@@ -177,9 +177,51 @@ model-viewer{
 .step h3{font-size:clamp(23px,2.9vw,34px); text-transform:uppercase; margin-bottom:9px}
 .step p{font-size:15.5px; max-width:44ch}
 
-/* ---------- explode stage: one model, roof node lifted by scroll ---------- */
-.explode-stage{position:relative; overflow:hidden}
+/* ---------- explode stage: centred car + callout labels ---------- */
+.pin-wrap.tall{height:460svh}
+.explode-stage{
+  position:relative; width:100%; height:min(80svh,760px);
+  border:1px solid var(--rule); border-radius:2px; background:
+    radial-gradient(ellipse at 50% 58%, rgba(76,201,240,.10), transparent 62%), var(--panel);
+}
 .explode-stage model-viewer{width:100%; height:100%}
+
+/* hotspots themselves are invisible anchors; the visible label is the callout */
+.hs{
+  width:9px; height:9px; padding:0; border-radius:50%; cursor:default;
+  border:1px solid var(--signal); background:rgba(76,201,240,.9);
+  box-shadow:0 0 0 4px rgba(76,201,240,.16);
+  opacity:0; transition:opacity .4s ease;
+}
+.hs[data-visible]{opacity:1}
+.stage-lit .hs{opacity:1}
+
+.callout-lines{position:absolute; inset:0; pointer-events:none; z-index:4}
+.callout-lines line{stroke:var(--signal); stroke-width:1; opacity:.55}
+.callout-lines circle{fill:var(--signal)}
+
+.callouts{position:absolute; inset:0; pointer-events:none; z-index:5}
+.callout{
+  position:absolute; opacity:0; transform:translateY(6px);
+  transition:opacity .45s ease, transform .45s ease;
+  background:rgba(8,9,15,.86); border:1px solid var(--rule);
+  border-left:2px solid var(--signal); padding:9px 13px; border-radius:2px;
+  max-width:230px; backdrop-filter:blur(3px);
+}
+.callout b{
+  display:block; font-family:var(--disp); font-size:15px; letter-spacing:.01em;
+  text-transform:uppercase; color:var(--text); margin-bottom:3px;
+}
+.callout span{
+  display:block; font-family:var(--mono); font-size:11px; line-height:1.45;
+  color:var(--muted);
+}
+.callout.on{opacity:1; transform:none}
+
+.ex-copy{margin-top:26px; max-width:62ch}
+.ex-copy h2{font-size:clamp(26px,3.4vw,42px); text-transform:uppercase; margin-bottom:10px}
+.ex-copy h2 em{font-style:normal; color:var(--signal)}
+.ex-copy p{font-size:16px; transition:opacity .35s ease}
 
 /* ---------- telemetry readout strip ---------- */
 .telem{
@@ -260,7 +302,19 @@ model-viewer{
   .row{grid-template-columns:44px 1fr; gap:16px}
   .row p{grid-column:2}
   .mini-stage{height:48svh}
-  .explode-stage{height:52svh}
+  .pin-wrap.tall{height:auto}
+  .explode-stage{height:56svh; overflow:visible}
+  /* section unpins on mobile: labels stack below the car instead of pointing */
+  .callout-lines{display:none}
+  .callouts{
+    position:absolute; left:0; right:0; top:100%; inset:auto 0 auto 0;
+    margin-top:16px; display:grid; gap:10px;
+  }
+  .callout{
+    position:static; opacity:1; transform:none!important; max-width:none;
+    left:auto!important; top:auto!important;
+  }
+  .ex-copy{margin-top:300px}
   .hud{display:none}
   .wrap{padding:0 20px}
   .band{padding:78px 0}
@@ -380,44 +434,49 @@ model-viewer{
 </div>
 
 <!-- ============ КОНСТРУКЦИЯ: разбор корпуса ============ -->
-<div class="pin-wrap" id="explodeWrap">
+<!-- ============ КОНСТРУКЦИЯ: разбор + выноски ============ -->
+<div class="pin-wrap tall" id="explodeWrap">
   <div class="pin">
-    <div class="wrap pin-inner">
-      <!-- ONE model containing both halves: real proportions are preserved.
-           The roof is a named node ("RoofGroup") we translate on scroll. -->
-      <div class="pin-stage explode-stage">
+    <div class="wrap">
+      <!-- car centred; roof lifts, fades out, then callout lines fan to labels -->
+      <div class="explode-stage" id="exStage">
         <span class="corner tl"></span><span class="corner tr"></span>
         <span class="corner bl"></span><span class="corner br"></span>
 
         <model-viewer id="mvAsm"
           src="models/assembly.glb"
-          alt="Машина со снимающейся крышей"
+          alt="Машина со снимающейся крышей и подписями узлов"
           camera-controls disable-zoom interaction-prompt="none"
           shadow-intensity="1" exposure="1.05" environment-image="neutral"
-          camera-orbit="18deg 68deg 105%" field-of-view="30deg"
+          camera-orbit="18deg 68deg 100%" field-of-view="30deg"
           min-camera-orbit="auto 15deg auto" max-camera-orbit="auto 78deg auto">
+
+          <button class="hs" slot="hotspot-pi"  data-position="6.5011m 0.0367m 2.2013m" data-normal="0m 1m 0m"></button>
+          <button class="hs" slot="hotspot-ard" data-position="6.4897m 0.0441m 2.1167m" data-normal="0m 1m 0m"></button>
+          <button class="hs" slot="hotspot-cam" data-position="6.5241m 0.1049m 1.9455m" data-normal="0m 1m 0m"></button>
         </model-viewer>
+
+        <!-- callout overlay: SVG lines + labels, positioned from hotspot pixels -->
+        <svg class="callout-lines" id="calloutSvg" aria-hidden="true"></svg>
+        <div class="callouts" id="callouts">
+          <div class="callout" data-for="pi">
+            <b>Raspberry Pi 4</b><span>Главный вычислительный блок</span>
+          </div>
+          <div class="callout" data-for="ard">
+            <b>Arduino Nano</b><span>Периферийный контроллер</span>
+          </div>
+          <div class="callout" data-for="cam">
+            <b>Курсовая камера</b><span>Видео на смартфон в реальном времени</span>
+          </div>
+        </div>
 
         <div class="stage-tag">Корпус&nbsp;<b id="liftOut">закрыт</b></div>
       </div>
 
-      <div class="steps">
+      <div class="ex-copy">
         <div class="eyebrow">Конструкция</div>
-        <h2 style="font-size:clamp(26px,3.4vw,42px);text-transform:uppercase;margin-bottom:6px">
-          Крыша <em style="font-style:normal;color:var(--signal)">снимается</em>
-        </h2>
-        <div class="step" data-ex="0">
-          <div class="step-n">01</div><h3>Крыша на защёлках</h3>
-          <p>Снимается руками за секунды — без инструментов и без разборки машины.</p>
-        </div>
-        <div class="step" data-ex="1">
-          <div class="step-n">02</div><h3>Технологический отсек</h3>
-          <p>Под крышей — платы, датчики и игровые модули. Всё утоплено в корпус и защищено при столкновениях.</p>
-        </div>
-        <div class="step" data-ex="2">
-          <div class="step-n">03</div><h3>Клеммы вместо пайки</h3>
-          <p>Датчики и ловушки подключаются винтовыми клеммами — сотни переподключений.</p>
-        </div>
+        <h2 id="exTitle">Крыша <em>снимается</em></h2>
+        <p id="exText">Снимается руками за секунды — без инструментов и без разборки машины.</p>
       </div>
     </div>
   </div>
@@ -567,16 +626,28 @@ model-viewer{
     }
   }
 
-  /* ---------- explode section: roof lifts off the chassis ---------- */
+  /* ---------- explode section: lift roof -> fade it -> draw callouts ---------- */
   var exWrap = document.getElementById('explodeWrap');
   var liftOut = document.getElementById('liftOut');
   var mvAsm = document.getElementById('mvAsm');
-  var exSteps = Array.prototype.slice.call(document.querySelectorAll('.step[data-ex]'));
+  var exStage = document.getElementById('exStage');
+  var calloutSvg = document.getElementById('calloutSvg');
+  var callouts = Array.prototype.slice.call(document.querySelectorAll('.callout'));
+  var exTitle = document.getElementById('exTitle');
+  var exText = document.getElementById('exText');
 
-  /* Both halves live in one glTF, so their real proportions are preserved.
-     Reach into the scene graph (documented FAQ pattern) and translate the
-     "RoofGroup" node, then ask model-viewer to re-render. */
+  var PHASE_COPY = [
+    ['Крыша <em>снимается</em>',
+     'Снимается руками за секунды — без инструментов и без разборки машины.'],
+    ['Технологический <em>отсек</em>',
+     'Под крышей — платы, датчики и игровые модули. Всё утоплено в корпус и защищено при столкновениях.'],
+    ['Что <em>внутри</em>',
+     'Вычислительный блок, периферийный контроллер и курсовая камера — ученик подключает их сам, винтовыми клеммами.']
+  ];
+  var lastPhase = -1;
+
   var roofNode = null, roofY0 = 0, roofSpan = 1, asmScene = null;
+  var roofMats = [];   // materials we fade out in phase 2
 
   function grabRoof(){
     if (!mvAsm || roofNode) return;
@@ -587,38 +658,84 @@ model-viewer{
       if (!scene || typeof scene.traverse !== 'function') return;
       asmScene = scene;
       scene.traverse(function(o){ if (o.name === 'RoofGroup') roofNode = o; });
-      if (roofNode) {
-        roofY0 = roofNode.position.y;
-        var dim = mvAsm.getDimensions ? mvAsm.getDimensions() : null;
-        roofSpan = (dim && dim.y) ? dim.y : 1;
-        onExplode();
-      }
+      if (!roofNode) return;
+      roofY0 = roofNode.position.y;
+      var dim = mvAsm.getDimensions ? mvAsm.getDimensions() : null;
+      roofSpan = (dim && dim.y) ? dim.y : 1;
+      /* collect the roof's materials once so fading doesn't touch the chassis */
+      roofNode.traverse(function(o){
+        if (!o.material) return;
+        (Array.isArray(o.material) ? o.material : [o.material]).forEach(function(m){
+          if (roofMats.indexOf(m) === -1) roofMats.push(m);
+        });
+      });
+      onExplode();
     } catch (e) { /* internal API — degrade to a static model */ }
   }
   if (mvAsm) mvAsm.addEventListener('load', grabRoof);
 
-  /* queueRender lives on the internal scene, NOT on the element. Calling it on
-     the element does nothing, which left the roof frozen until a click woke the
-     render loop. */
   function repaintAsm(){
     if (!asmScene) return;
     if (typeof asmScene.queueRender === 'function') asmScene.queueRender();
     else if (mvAsm && typeof mvAsm.queueRender === 'function') mvAsm.queueRender();
   }
 
-  /* Belt and braces: while the explode section is on screen, keep asking for
-     frames on rAF. queueRender alone can be dropped if the renderer has parked
-     the element, which is what made the roof update only on click. */
+  /* Keep asking for frames while the section is moving: queueRender alone can be
+     dropped once the renderer has parked the element. */
   var asmPumpUntil = 0, asmPumping = false;
   function pumpAsm(){
     if (!asmPumping) return;
     repaintAsm();
+    drawCallouts();
     if (performance.now() < asmPumpUntil) requestAnimationFrame(pumpAsm);
     else asmPumping = false;
   }
   function kickAsm(){
-    asmPumpUntil = performance.now() + 400;   // keep painting briefly after scroll stops
+    asmPumpUntil = performance.now() + 500;
     if (!asmPumping) { asmPumping = true; requestAnimationFrame(pumpAsm); }
+  }
+
+  /* Project each hotspot to pixels and draw a line to its label. */
+  var CALLOUT_SIDES = { pi:'right', ard:'left', cam:'right' };
+  function drawCallouts(){
+    if (!mvAsm || !exStage || !calloutSvg || !mvAsm.queryHotspot) return;
+    var W = exStage.clientWidth, H = exStage.clientHeight;
+    if (!W || !H) return;
+    calloutSvg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+
+    /* canvasPosition is in canvas pixels; on HiDPI that is not CSS pixels.
+       Scale by the model-viewer's own rendered size to stay aligned. */
+    var mvRect = mvAsm.getBoundingClientRect();
+    var stRect = exStage.getBoundingClientRect();
+    var dx = mvRect.left - stRect.left, dy = mvRect.top - stRect.top;
+    var cv = mvAsm.shadowRoot && mvAsm.shadowRoot.querySelector('canvas');
+    var sx = (cv && cv.width)  ? mvRect.width  / cv.width  : 1;
+    var sy = (cv && cv.height) ? mvRect.height / cv.height : 1;
+
+    var parts = [];
+    callouts.forEach(function(el){
+      var key = el.getAttribute('data-for');
+      var hs = mvAsm.queryHotspot('hotspot-' + key);
+      if (!hs || !hs.canvasPosition) { el.classList.remove('on'); return; }
+      var x = hs.canvasPosition.x * sx + dx;
+      var y = hs.canvasPosition.y * sy + dy;
+      if (!isFinite(x) || !isFinite(y)) { el.classList.remove('on'); return; }
+
+      /* park the label near the edge, vertically aligned with its part */
+      var side = CALLOUT_SIDES[key] || 'right';
+      var lx = side === 'right' ? W * 0.80 : W * 0.20;
+      var ly = Math.max(40, Math.min(H - 40, y));
+      el.style.left = lx + 'px';
+      el.style.top = ly + 'px';
+      el.style.transform = 'translate(' + (side === 'right' ? '0' : '-100%') + ',-50%)';
+
+      var elbowX = side === 'right' ? lx - 14 : lx + 14;
+      parts.push(
+        '<line x1="' + x.toFixed(1) + '" y1="' + y.toFixed(1) +
+        '" x2="' + elbowX.toFixed(1) + '" y2="' + ly.toFixed(1) + '"/>' +
+        '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="2.5"/>');
+    });
+    calloutSvg.innerHTML = parts.join('');
   }
 
   function onExplode(){
@@ -627,20 +744,45 @@ model-viewer{
     var total = r.height - window.innerHeight;
     var p = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 0;
 
-    /* ease so the roof settles instead of tracking scroll linearly */
-    var e = p < .5 ? 2*p*p : 1 - Math.pow(-2*p + 2, 2) / 2;
+    /* three phases across the pinned scroll:
+       0.00-0.45 roof rises | 0.45-0.62 roof fades out | 0.62-1.00 callouts */
+    var pLift = Math.min(1, p / 0.45);
+    var pFade = Math.min(1, Math.max(0, (p - 0.45) / 0.17));
+    var pInfo = Math.min(1, Math.max(0, (p - 0.62) / 0.20));
+
+    var e = pLift < .5 ? 2*pLift*pLift : 1 - Math.pow(-2*pLift + 2, 2) / 2;
 
     if (roofNode && !reduce) {
       roofNode.position.y = roofY0 + e * roofSpan * 0.75;
       roofNode.updateMatrixWorld(true);
+      roofNode.visible = pFade < 1;
+      roofMats.forEach(function(m){
+        m.transparent = true;
+        m.opacity = 1 - pFade;
+        m.depthWrite = pFade < 0.5;
+      });
       repaintAsm();
       kickAsm();
     }
 
-    if (liftOut) liftOut.textContent = p < .04 ? 'закрыт' : (p > .92 ? 'открыт' : 'снимается');
+    if (exStage) exStage.classList.toggle('stage-lit', pInfo > 0.05);
+    callouts.forEach(function(el, i){
+      el.classList.toggle('on', pInfo > 0.12 + i * 0.16);
+    });
+    if (pInfo > 0.05) drawCallouts();
 
-    var idx = Math.min(exSteps.length - 1, Math.floor(p * exSteps.length + 0.0001));
-    exSteps.forEach(function(s,i){ s.classList.toggle('on', i === idx); });
+    var phase = pInfo > 0.05 ? 2 : (pFade > 0.05 ? 1 : 0);
+    if (phase !== lastPhase) {
+      lastPhase = phase;
+      if (exTitle) exTitle.innerHTML = PHASE_COPY[phase][0];
+      if (exText) exText.textContent = PHASE_COPY[phase][1];
+    }
+
+    if (liftOut) {
+      liftOut.textContent = pInfo > 0.05 ? 'узлы' :
+                            (pFade > 0.5 ? 'открыт' :
+                            (p < .04 ? 'закрыт' : 'снимается'));
+    }
   }
 
   var ticking = false;
