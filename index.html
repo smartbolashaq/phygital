@@ -686,20 +686,30 @@ model-viewer{
       roofY0 = roofNode.position.y;
       var dim = mvAsm.getDimensions ? mvAsm.getDimensions() : null;
       roofSpan = (dim && dim.y) ? dim.y : 1;
-      /* glTF reuses material objects: the body paint on the roof is the SAME
-         object as on the chassis. Mutating opacity directly would fade the whole
-         car, so give the roof its own clones first. */
+      /* Two problems solved in one pass:
+         1. glTF reuses material objects — the roof's paint is the SAME object as
+            the chassis paint, so fading it directly would fade the whole car.
+         2. The window "decals" sit ~0.00007 units off the roof panel, far too
+            close for the depth buffer to separate, which showed up as flickering
+            black triangles.
+         So: give every roof mesh its own material clone, and push the decals
+         forward in depth only (polygonOffset leaves geometry untouched). */
       roofNode.traverse(function(o){
         if (!o.material) return;
-        if (Array.isArray(o.material)) {
-          o.material = o.material.map(function(m){
-            var c = m.clone(); roofMats.push(c); return c;
-          });
-        } else {
-          var c = o.material.clone();
+        var isDecal = !!o.name && o.name.indexOf('Decal') !== -1;
+        var list = Array.isArray(o.material) ? o.material : [o.material];
+        var clones = list.map(function(m){
+          var c = m.clone();
+          if (isDecal) {
+            c.polygonOffset = true;
+            c.polygonOffsetFactor = -2;
+            c.polygonOffsetUnits = -2;
+          }
+          c.needsUpdate = true;
           roofMats.push(c);
-          o.material = c;
-        }
+          return c;
+        });
+        o.material = Array.isArray(o.material) ? clones : clones[0];
       });
       onExplode();
     } catch (e) { /* internal API — degrade to a static model */ }
