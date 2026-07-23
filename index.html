@@ -209,18 +209,18 @@ model-viewer{
 .callouts{position:absolute; inset:0; pointer-events:none; z-index:5}
 .callout{
   position:absolute; opacity:0;
-  transition:opacity .45s ease;
+  transition:opacity .4s ease;
   background:rgba(8,9,15,.92); border:1px solid var(--rule);
-  border-left:2px solid var(--signal); padding:10px 14px; border-radius:2px;
-  width:max-content; max-width:min(260px,22vw); backdrop-filter:blur(3px);
+  border-left:2px solid var(--signal); padding:8px 12px; border-radius:2px;
+  width:max-content; max-width:min(238px,20vw); backdrop-filter:blur(3px);
 }
 .callout b{
-  display:block; font-family:var(--disp); font-size:15px; letter-spacing:.01em;
-  text-transform:uppercase; color:var(--text); margin-bottom:3px;
+  display:block; font-family:var(--disp); font-size:13.5px; letter-spacing:.01em;
+  text-transform:uppercase; color:var(--text); margin-bottom:2px;
   white-space:nowrap;
 }
 .callout span{
-  display:block; font-family:var(--mono); font-size:11px; line-height:1.5;
+  display:block; font-family:var(--mono); font-size:10px; line-height:1.45;
   color:var(--muted);
 }
 .callout.on{opacity:1}
@@ -467,19 +467,35 @@ model-viewer{
           <button class="hs" slot="hotspot-pi"  data-position="-0.0227m -0.0044m 0.0336m" data-normal="0m 1m 0m" data-visibility-attribute="visible"></button>
           <button class="hs" slot="hotspot-ard" data-position="-0.0341m 0.0030m -0.0510m" data-normal="0m 1m 0m" data-visibility-attribute="visible"></button>
           <button class="hs" slot="hotspot-cam" data-position="0.0003m 0.0638m -0.2222m" data-normal="0m 1m 0m" data-visibility-attribute="visible"></button>
+          <button class="hs" slot="hotspot-irrx" data-position="-0.0007m 0.0244m -0.1979m" data-normal="0m 1m 0m" data-visibility-attribute="visible"></button>
+          <button class="hs" slot="hotspot-irtx" data-position="-0.0003m 0.0185m 0.1770m" data-normal="0m 1m 0m" data-visibility-attribute="visible"></button>
+          <button class="hs" slot="hotspot-ant" data-position="-0.0011m 0.0077m 0.1282m" data-normal="0m 1m 0m" data-visibility-attribute="visible"></button>
+          <button class="hs" slot="hotspot-pwr" data-position="0.0326m -0.0112m -0.0520m" data-normal="0m 1m 0m" data-visibility-attribute="visible"></button>
         </model-viewer>
 
         <!-- callout overlay: SVG lines + labels, positioned from hotspot pixels -->
         <svg class="callout-lines" id="calloutSvg" aria-hidden="true"></svg>
         <div class="callouts" id="callouts">
+          <div class="callout" data-for="cam">
+            <b>Курсовая камера</b><span>Видео на смартфон в реальном времени</span>
+          </div>
+          <div class="callout" data-for="ant">
+            <b>FPV-антенна</b><span>Грибовидная антенна видеоканала</span>
+          </div>
+          <div class="callout" data-for="irtx">
+            <b>ИК-передатчик</b><span>«Пушка» — отмечает попадания по соперникам</span>
+          </div>
           <div class="callout" data-for="pi">
             <b>Raspberry Pi 4</b><span>Главный вычислительный блок</span>
           </div>
           <div class="callout" data-for="ard">
             <b>Arduino Nano</b><span>Периферийный контроллер</span>
           </div>
-          <div class="callout" data-for="cam">
-            <b>Курсовая камера</b><span>Видео на смартфон в реальном времени</span>
+          <div class="callout" data-for="irrx">
+            <b>ИК-приёмник</b><span>Ловит попадания и включает штрафной режим</span>
+          </div>
+          <div class="callout" data-for="pwr">
+            <b>Плата питания</b><span>Клеммное распределение на все модули</span>
           </div>
         </div>
 
@@ -733,7 +749,12 @@ model-viewer{
      because the dot moved while the label stayed put, so the leader line
      stretched away from the part. We only push labels apart when they would
      actually overlap. */
-  var CALLOUT_SIDES = { pi:'right', ard:'left', cam:'right' };
+  /* Sides are split so neither column has to stack too many labels: the parts
+     at the rear of the car go right, the ones toward the front go left. */
+  var CALLOUT_SIDES = {
+    cam:'right', ant:'right', irtx:'right', pi:'right',
+    ard:'left',  irrx:'left', pwr:'left'
+  };
   function drawCallouts(){
     if (!mvAsm || !exStage || !calloutSvg || !mvAsm.queryHotspot) return;
     var W = exStage.clientWidth, H = exStage.clientHeight;
@@ -844,8 +865,11 @@ model-viewer{
 
     infoActive = pInfo > 0.02;
     if (exStage) exStage.classList.toggle('stage-lit', infoActive);
+    /* spread the reveal across the info phase regardless of how many labels
+       there are, so the last one is not still hidden at the end of the scroll */
+    var stagger = 0.55 / Math.max(1, callouts.length);
     callouts.forEach(function(el, i){
-      el.classList.toggle('on', pInfo > 0.06 + i * 0.14);
+      el.classList.toggle('on', pInfo > 0.05 + i * stagger);
     });
     if (infoActive) drawCallouts();
     else if (calloutSvg) calloutSvg.innerHTML = '';
