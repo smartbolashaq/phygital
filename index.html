@@ -181,9 +181,11 @@ model-viewer{
 .pin-wrap.tall{height:460svh}
 /* this section needs more horizontal room: the car sits centre stage and the
    callout labels park against the left/right edges */
-.pin-wrap.tall .wrap{max-width:1660px; padding:0 40px}
+/* .pin is a flex container, so an inner .wrap shrinks to its content and the
+   max-width below never gets a chance to apply — force it to take the row. */
+.pin-wrap.tall .wrap{width:100%; max-width:1760px; padding:0 44px}
 .explode-stage{
-  position:relative; width:100%; height:min(82svh,820px);
+  position:relative; width:100%; height:min(70svh,700px);
   border:1px solid var(--rule); border-radius:2px; background:
     radial-gradient(ellipse at 50% 58%, rgba(76,201,240,.10), transparent 62%), var(--panel);
 }
@@ -206,11 +208,11 @@ model-viewer{
 
 .callouts{position:absolute; inset:0; pointer-events:none; z-index:5}
 .callout{
-  position:absolute; opacity:0; transform:translateY(6px);
-  transition:opacity .45s ease, transform .45s ease;
-  background:rgba(8,9,15,.9); border:1px solid var(--rule);
+  position:absolute; opacity:0;
+  transition:opacity .45s ease;
+  background:rgba(8,9,15,.92); border:1px solid var(--rule);
   border-left:2px solid var(--signal); padding:10px 14px; border-radius:2px;
-  width:max-content; max-width:230px; backdrop-filter:blur(3px);
+  width:max-content; max-width:min(260px,22vw); backdrop-filter:blur(3px);
 }
 .callout b{
   display:block; font-family:var(--disp); font-size:15px; letter-spacing:.01em;
@@ -221,12 +223,12 @@ model-viewer{
   display:block; font-family:var(--mono); font-size:11px; line-height:1.5;
   color:var(--muted);
 }
-.callout.on{opacity:1; transform:none}
+.callout.on{opacity:1}
 
-.ex-copy{margin-top:26px; max-width:62ch}
-.ex-copy h2{font-size:clamp(26px,3.4vw,42px); text-transform:uppercase; margin-bottom:10px}
+.ex-copy{margin:0 0 20px; max-width:70ch; min-height:118px}
+.ex-copy h2{font-size:clamp(24px,3vw,38px); text-transform:uppercase; margin-bottom:8px}
 .ex-copy h2 em{font-style:normal; color:var(--signal)}
-.ex-copy p{font-size:16px; transition:opacity .35s ease}
+.ex-copy p{font-size:15.5px; transition:opacity .35s ease}
 
 /* ---------- telemetry readout strip ---------- */
 .telem{
@@ -444,6 +446,12 @@ model-viewer{
   <div class="pin">
     <div class="wrap">
       <!-- car centred; roof lifts, fades out, then callout lines fan to labels -->
+      <div class="ex-copy">
+        <div class="eyebrow">Конструкция</div>
+        <h2 id="exTitle">Крыша <em>снимается</em></h2>
+        <p id="exText">Снимается руками за секунды — без инструментов и без разборки машины.</p>
+      </div>
+
       <div class="explode-stage" id="exStage">
         <span class="corner tl"></span><span class="corner tr"></span>
         <span class="corner bl"></span><span class="corner br"></span>
@@ -478,11 +486,6 @@ model-viewer{
         <div class="stage-tag">Корпус&nbsp;<b id="liftOut">закрыт</b></div>
       </div>
 
-      <div class="ex-copy">
-        <div class="eyebrow">Конструкция</div>
-        <h2 id="exTitle">Крыша <em>снимается</em></h2>
-        <p id="exText">Снимается руками за секунды — без инструментов и без разборки машины.</p>
-      </div>
     </div>
   </div>
 </div>
@@ -710,9 +713,11 @@ model-viewer{
   }
 
   /* Project each hotspot to pixels and draw a line to its label. */
-  /* fixed vertical lanes keep labels from stacking on top of each other */
+  /* Labels follow their own hotspot vertically. Fixed lanes looked broken
+     because the dot moved while the label stayed put, so the leader line
+     stretched away from the part. We only push labels apart when they would
+     actually overlap. */
   var CALLOUT_SIDES = { pi:'right', ard:'left', cam:'right' };
-  var CALLOUT_LANE  = { cam:0.26,  ard:0.46,   pi:0.66 };
   function drawCallouts(){
     if (!mvAsm || !exStage || !calloutSvg || !mvAsm.queryHotspot) return;
     var W = exStage.clientWidth, H = exStage.clientHeight;
@@ -728,37 +733,68 @@ model-viewer{
     var sx = (cv && cv.width)  ? mvRect.width  / cv.width  : 1;
     var sy = (cv && cv.height) ? mvRect.height / cv.height : 1;
 
-    var parts = [];
+    /* 1st pass: project every hotspot and note where its label wants to sit */
+    var items = [];
     callouts.forEach(function(el){
       var key = el.getAttribute('data-for');
       var side = CALLOUT_SIDES[key] || 'right';
-      var lx = side === 'right' ? W - 24 : 24;
-      var ly = H * (CALLOUT_LANE[key] || 0.5);
-
-      /* park the label first so it never animates in from a stale spot */
-      el.style.left = lx + 'px';
-      el.style.top = ly + 'px';
-      el.style.transform = 'translate(' + (side === 'right' ? '-100%' : '0') + ',-50%)';
-
-      /* a leader without its label is a wire into empty space: only draw it
-         once the label it points at has actually been revealed */
-      if (!el.classList.contains('on')) return;
-
       var hs = mvAsm.queryHotspot('hotspot-' + key);
-      if (!hs || !hs.canvasPosition) return;
-      var x = hs.canvasPosition.x * sx + dx;
-      var y = hs.canvasPosition.y * sy + dy;
-      if (!isFinite(x) || !isFinite(y)) return;
+      var ok = !!(hs && hs.canvasPosition);
+      var x = ok ? hs.canvasPosition.x * sx + dx : 0;
+      var y = ok ? hs.canvasPosition.y * sy + dy : 0;
+      if (!isFinite(x) || !isFinite(y)) ok = false;
+      items.push({ el: el, side: side, ok: ok, x: x, y: y,
+                   h: el.offsetHeight || 56, w: el.offsetWidth || 200,
+                   want: y });
+    });
 
-      /* elbow: run out horizontally from the part, then into the label edge */
-      var edgeX = side === 'right' ? lx - el.offsetWidth - 10 : lx + el.offsetWidth + 10;
+    /* 2nd pass: per side, keep vertical order but separate overlapping labels */
+    ['left','right'].forEach(function(side){
+      var col = items.filter(function(it){ return it.side === side && it.ok; })
+                     .sort(function(a,b){ return a.want - b.want; });
+      var prevBottom = 12;
+      col.forEach(function(it){
+        var top = Math.max(prevBottom, it.want - it.h / 2);
+        it.top = top;
+        prevBottom = top + it.h + 14;
+      });
+      /* if the stack ran past the bottom, walk back up so nothing overlaps */
+      var overflow = prevBottom - 14 - (H - 12);
+      if (overflow > 0) {
+        for (var k = col.length - 1; k >= 0; k--) {
+          col[k].top -= overflow;
+          if (k > 0) {
+            var maxTop = col[k].top - col[k-1].h - 14;
+            if (col[k-1].top <= maxTop) break;
+            overflow = col[k-1].top - maxTop;
+          }
+        }
+        col.forEach(function(it){ if (it.top < 12) it.top = 12; });
+      }
+    });
+
+    /* 3rd pass: place labels and draw an elbow leader from part to label */
+    var parts = [];
+    items.forEach(function(it){
+      var el = it.el;
+      var lx = it.side === 'right' ? W - 24 : 24;
+      var top = (it.top != null) ? it.top : (H - it.h) / 2;
+      el.style.left = lx + 'px';
+      el.style.top = top + 'px';
+      el.style.transform = 'translate(' + (it.side === 'right' ? '-100%' : '0') + ',0)';
+
+      if (!it.ok || !el.classList.contains('on')) return;
+
+      var anchorY = top + it.h / 2;
+      var edgeX = it.side === 'right' ? lx - it.w - 12 : lx + it.w + 12;
       parts.push(
         '<polyline points="' +
-          x.toFixed(1) + ',' + y.toFixed(1) + ' ' +
-          edgeX.toFixed(1) + ',' + y.toFixed(1) + ' ' +
-          edgeX.toFixed(1) + ',' + ly.toFixed(1) +
+          it.x.toFixed(1) + ',' + it.y.toFixed(1) + ' ' +
+          edgeX.toFixed(1) + ',' + it.y.toFixed(1) + ' ' +
+          edgeX.toFixed(1) + ',' + anchorY.toFixed(1) + ' ' +
+          (it.side === 'right' ? (edgeX + 12) : (edgeX - 12)).toFixed(1) + ',' + anchorY.toFixed(1) +
         '" fill="none"/>' +
-        '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="2.5"/>');
+        '<circle cx="' + it.x.toFixed(1) + '" cy="' + it.y.toFixed(1) + '" r="2.5"/>');
     });
     calloutSvg.innerHTML = parts.join('');
   }
