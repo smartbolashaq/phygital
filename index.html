@@ -177,6 +177,15 @@ model-viewer{
 .step h3{font-size:clamp(23px,2.9vw,34px); text-transform:uppercase; margin-bottom:9px}
 .step p{font-size:15.5px; max-width:44ch}
 
+/* ---------- explode stage: roof stacked over chassis ---------- */
+.explode-stage{position:relative; overflow:hidden}
+.layer{position:absolute; inset:0}
+.layer model-viewer{width:100%; height:100%}
+/* the roof sits on top and is translated upward as the section scrolls */
+.lift{z-index:3; will-change:transform; pointer-events:none}
+.lift model-viewer{pointer-events:none}
+.base{z-index:2}
+
 /* ---------- telemetry readout strip ---------- */
 .telem{
   display:flex; gap:0; border:1px solid var(--rule); border-radius:2px;
@@ -256,6 +265,10 @@ model-viewer{
   .row{grid-template-columns:44px 1fr; gap:16px}
   .row p{grid-column:2}
   .mini-stage{height:48svh}
+  /* pinned sections unpin on mobile: show the halves side by side, no lift */
+  .explode-stage{height:52svh}
+  .layer{position:relative; height:50%}
+  .lift{transform:none!important}
   .hud{display:none}
   .wrap{padding:0 20px}
   .band{padding:78px 0}
@@ -265,6 +278,7 @@ model-viewer{
   html{scroll-behavior:auto}
   .reveal{opacity:1; transform:none}
   .step{opacity:1}
+  .lift{transform:none!important}
 }
 </style>
 </head>
@@ -306,7 +320,7 @@ model-viewer{
           environment-image="neutral"
           camera-orbit="35deg 74deg 105%"
           min-camera-orbit="auto 15deg auto"
-          max-camera-orbit="auto 88deg auto"
+          max-camera-orbit="auto 78deg auto"
           field-of-view="30deg">
         </model-viewer>
         <div class="drag-hint" id="hint">Потяни мышью — модель вращается</div>
@@ -345,7 +359,7 @@ model-viewer{
           environment-image="neutral"
           camera-orbit="0deg 75deg 105%"
           min-camera-orbit="auto 15deg auto"
-          max-camera-orbit="auto 88deg auto"
+          max-camera-orbit="auto 78deg auto"
           field-of-view="30deg">
         </model-viewer>
         <div class="stage-tag">Угол&nbsp;<b id="angleOut">000°</b></div>
@@ -374,44 +388,61 @@ model-viewer{
   </div>
 </div>
 
-<!-- ============ КОНСТРУКЦИЯ ============ -->
-<section class="band">
-  <div class="wrap">
-    <div class="split">
-      <div class="reveal">
-        <div class="eyebrow">Конструкция</div>
-        <h2 style="font-size:clamp(32px,4.6vw,54px);text-transform:uppercase">Защищённый<br><em style="font-style:normal;color:var(--signal)">технологический отсек</em></h2>
-        <div class="rows" style="margin-top:38px">
-          <div class="row" style="grid-template-columns:64px 1fr">
-            <div class="row-n">01</div>
-            <div><h3>Крыша на защёлках</h3><p>Открывает доступ к электронике за секунды, без инструментов.</p></div>
-          </div>
-          <div class="row" style="grid-template-columns:64px 1fr">
-            <div class="row-n">02</div>
-            <div><h3>Электроника внутри</h3><p>Платы утоплены в корпус и защищены при столкновениях.</p></div>
-          </div>
-          <div class="row" style="grid-template-columns:64px 1fr">
-            <div class="row-n">03</div>
-            <div><h3>Клеммы вместо пайки</h3><p>Датчики и ловушки подключаются винтовыми клеммами — сотни переподключений.</p></div>
-          </div>
-        </div>
-      </div>
-      <div class="mini-stage reveal">
+<!-- ============ КОНСТРУКЦИЯ: разбор корпуса ============ -->
+<div class="pin-wrap" id="explodeWrap">
+  <div class="pin">
+    <div class="wrap pin-inner">
+      <!-- both halves live in ONE stage: the roof lifts off the chassis on scroll -->
+      <div class="pin-stage explode-stage">
         <span class="corner tl"></span><span class="corner tr"></span>
         <span class="corner bl"></span><span class="corner br"></span>
-        <model-viewer id="mvOpen"
-          src="models/car2.glb"
-          alt="Открытое шасси с электроникой"
-          camera-controls disable-zoom interaction-prompt="none"
-          shadow-intensity="1" exposure="1.05" environment-image="neutral"
-          camera-orbit="18deg 42deg 105%" field-of-view="30deg"
-          min-camera-orbit="auto 15deg auto" max-camera-orbit="auto 88deg auto">
-        </model-viewer>
-        <div class="stage-tag">Модель&nbsp;02&nbsp;<b>Открытое шасси</b></div>
+
+        <div class="layer base">
+          <model-viewer id="mvOpen"
+            src="models/car2.glb"
+            alt="Нижняя часть машины с электроникой"
+            camera-controls disable-zoom interaction-prompt="none"
+            shadow-intensity="1" exposure="1.05" environment-image="neutral"
+            camera-orbit="18deg 64deg 105%" field-of-view="30deg"
+            min-camera-orbit="auto 15deg auto" max-camera-orbit="auto 78deg auto">
+          </model-viewer>
+        </div>
+
+        <div class="layer lift" id="lift">
+          <model-viewer id="mvRoof"
+            src="models/car3.glb"
+            alt="Съёмная крыша корпуса"
+            camera-controls disable-zoom interaction-prompt="none"
+            shadow-intensity="0" exposure="1.1" environment-image="neutral"
+            camera-orbit="18deg 64deg 105%" field-of-view="30deg"
+            min-camera-orbit="auto 15deg auto" max-camera-orbit="auto 78deg auto">
+          </model-viewer>
+        </div>
+
+        <div class="stage-tag">Корпус&nbsp;<b id="liftOut">закрыт</b></div>
+      </div>
+
+      <div class="steps">
+        <div class="eyebrow">Конструкция</div>
+        <h2 style="font-size:clamp(26px,3.4vw,42px);text-transform:uppercase;margin-bottom:6px">
+          Крыша <em style="font-style:normal;color:var(--signal)">снимается</em>
+        </h2>
+        <div class="step" data-ex="0">
+          <div class="step-n">01</div><h3>Крыша на защёлках</h3>
+          <p>Снимается руками за секунды — без инструментов и без разборки машины.</p>
+        </div>
+        <div class="step" data-ex="1">
+          <div class="step-n">02</div><h3>Технологический отсек</h3>
+          <p>Под крышей — платы, датчики и игровые модули. Всё утоплено в корпус и защищено при столкновениях.</p>
+        </div>
+        <div class="step" data-ex="2">
+          <div class="step-n">03</div><h3>Клеммы вместо пайки</h3>
+          <p>Датчики и ловушки подключаются винтовыми клеммами — сотни переподключений.</p>
+        </div>
       </div>
     </div>
   </div>
-</section>
+</div>
 
 <!-- ============ ИГРА ============ -->
 <section class="band">
@@ -461,32 +492,17 @@ model-viewer{
 <!-- ============ ПРИМЕНЕНИЕ ============ -->
 <section class="band">
   <div class="wrap">
-    <div class="split">
-      <div class="mini-stage reveal" style="order:0">
-        <span class="corner tl"></span><span class="corner tr"></span>
-        <span class="corner bl"></span><span class="corner br"></span>
-        <model-viewer id="mvRoof"
-          src="models/car3.glb"
-          alt="Съёмная крыша корпуса"
-          camera-controls disable-zoom interaction-prompt="none"
-          shadow-intensity="1" exposure="1.1" environment-image="neutral"
-          camera-orbit="25deg 60deg 105%" field-of-view="30deg"
-          min-camera-orbit="auto 15deg auto" max-camera-orbit="auto 88deg auto">
-        </model-viewer>
-        <div class="stage-tag">Модель&nbsp;03&nbsp;<b>Съёмная крыша</b></div>
-      </div>
-      <div class="reveal">
-        <div class="eyebrow">Применение</div>
-        <h2 style="font-size:clamp(32px,4.6vw,54px);text-transform:uppercase">Один комплекс —<br><em style="font-style:normal;color:var(--signal)">много площадок</em></h2>
-        <div class="chips">
-          <span class="chip">Школы</span>
-          <span class="chip">Колледжи</span>
-          <span class="chip">STEM-центры</span>
-          <span class="chip">Кружки робототехники</span>
-          <span class="chip">Инженерные классы</span>
-          <span class="chip">Турниры и хакатоны</span>
-        </div>
-      </div>
+    <div class="band-head reveal">
+      <div class="eyebrow">Применение</div>
+      <h2>Один комплекс —<br><em>много площадок</em></h2>
+    </div>
+    <div class="chips reveal">
+      <span class="chip">Школы</span>
+      <span class="chip">Колледжи</span>
+      <span class="chip">STEM-центры</span>
+      <span class="chip">Кружки робототехники</span>
+      <span class="chip">Инженерные классы</span>
+      <span class="chip">Турниры и хакатоны</span>
     </div>
   </div>
 </section>
@@ -572,12 +588,51 @@ model-viewer{
     }
   }
 
+  /* ---------- explode section: roof lifts off the chassis ---------- */
+  var exWrap = document.getElementById('explodeWrap');
+  var lift = document.getElementById('lift');
+  var liftOut = document.getElementById('liftOut');
+  var mvOpen = document.getElementById('mvOpen');
+  var mvRoof = document.getElementById('mvRoof');
+  var exSteps = Array.prototype.slice.call(document.querySelectorAll('.step[data-ex]'));
+
+  /* The roof layer ignores pointer events, so the visitor always grabs the
+     chassis underneath. Mirror its camera onto the roof so the two halves
+     stay locked together while being rotated. */
+  if (mvOpen && mvRoof) {
+    mvOpen.addEventListener('camera-change', function(){
+      try {
+        mvRoof.setAttribute('camera-orbit', mvOpen.getCameraOrbit().toString());
+        if (mvRoof.jumpCameraToGoal) mvRoof.jumpCameraToGoal();
+      } catch(e){}
+    });
+  }
+
+  function onExplode(){
+    if (!exWrap || !lift) return;
+    var r = exWrap.getBoundingClientRect();
+    var total = r.height - window.innerHeight;
+    var p = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 0;
+
+    /* ease the lift so it settles instead of tracking scroll linearly */
+    var e = p < .5 ? 2*p*p : 1 - Math.pow(-2*p + 2, 2) / 2;
+    var stage = exWrap.querySelector('.explode-stage');
+    var travel = stage ? stage.clientHeight * 0.34 : 180;
+    lift.style.transform = 'translateY(' + (-e * travel).toFixed(1) + 'px)';
+
+    if (liftOut) liftOut.textContent = p < .04 ? 'закрыт' : (p > .92 ? 'открыт' : 'снимается');
+
+    var idx = Math.min(exSteps.length - 1, Math.floor(p * exSteps.length + 0.0001));
+    exSteps.forEach(function(s,i){ s.classList.toggle('on', i === idx); });
+  }
+
   var ticking = false;
   window.addEventListener('scroll', function(){
-    if (!ticking) { window.requestAnimationFrame(function(){ onScroll(); ticking = false; }); ticking = true; }
+    if (!ticking) { window.requestAnimationFrame(function(){ onScroll(); onExplode(); ticking = false; }); ticking = true; }
   }, {passive:true});
-  window.addEventListener('resize', onScroll, {passive:true});
+  window.addEventListener('resize', function(){ onScroll(); onExplode(); }, {passive:true});
   onScroll();
+  onExplode();
 
   /* ---------- reveal on enter ---------- */
   if ('IntersectionObserver' in window) {

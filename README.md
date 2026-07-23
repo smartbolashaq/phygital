@@ -31,12 +31,12 @@ python3 -m http.server 8000
 `models/car2.glb` — открытое шасси
 `models/car3.glb` — съёмная крыша
 
-Сжаты через gltfpack (meshopt): 63 МБ → 7.5 МБ.
+Сжаты через gltfpack (meshopt). car1 — обновлённая модель из Blender.
 
 Команда сжатия:
 
 ```
-gltfpack -i исходник.glb -o результат.glb -cc -vp 16 -vn 16 -vt 16
+gltfpack -i исходник.glb -o результат.glb -cc -vpf -vn 16 -vt 16
 ```
 
 Флаги `-vn 16` и `-vt 16` важны: по умолчанию gltfpack квантует нормали
