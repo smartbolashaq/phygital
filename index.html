@@ -576,7 +576,7 @@ model-viewer{
   /* Both halves live in one glTF, so their real proportions are preserved.
      Reach into the scene graph (documented FAQ pattern) and translate the
      "RoofGroup" node, then ask model-viewer to re-render. */
-  var roofNode = null, roofY0 = 0, roofSpan = 1;
+  var roofNode = null, roofY0 = 0, roofSpan = 1, asmScene = null;
 
   function grabRoof(){
     if (!mvAsm || roofNode) return;
@@ -585,6 +585,7 @@ model-viewer{
                       .find(function(s){ return s.description === 'scene'; });
       var scene = sym ? mvAsm[sym] : null;
       if (!scene || typeof scene.traverse !== 'function') return;
+      asmScene = scene;
       scene.traverse(function(o){ if (o.name === 'RoofGroup') roofNode = o; });
       if (roofNode) {
         roofY0 = roofNode.position.y;
@@ -595,6 +596,30 @@ model-viewer{
     } catch (e) { /* internal API — degrade to a static model */ }
   }
   if (mvAsm) mvAsm.addEventListener('load', grabRoof);
+
+  /* queueRender lives on the internal scene, NOT on the element. Calling it on
+     the element does nothing, which left the roof frozen until a click woke the
+     render loop. */
+  function repaintAsm(){
+    if (!asmScene) return;
+    if (typeof asmScene.queueRender === 'function') asmScene.queueRender();
+    else if (mvAsm && typeof mvAsm.queueRender === 'function') mvAsm.queueRender();
+  }
+
+  /* Belt and braces: while the explode section is on screen, keep asking for
+     frames on rAF. queueRender alone can be dropped if the renderer has parked
+     the element, which is what made the roof update only on click. */
+  var asmPumpUntil = 0, asmPumping = false;
+  function pumpAsm(){
+    if (!asmPumping) return;
+    repaintAsm();
+    if (performance.now() < asmPumpUntil) requestAnimationFrame(pumpAsm);
+    else asmPumping = false;
+  }
+  function kickAsm(){
+    asmPumpUntil = performance.now() + 400;   // keep painting briefly after scroll stops
+    if (!asmPumping) { asmPumping = true; requestAnimationFrame(pumpAsm); }
+  }
 
   function onExplode(){
     if (!exWrap) return;
@@ -607,7 +632,9 @@ model-viewer{
 
     if (roofNode && !reduce) {
       roofNode.position.y = roofY0 + e * roofSpan * 0.75;
-      if (mvAsm.queueRender) mvAsm.queueRender();
+      roofNode.updateMatrixWorld(true);
+      repaintAsm();
+      kickAsm();
     }
 
     if (liftOut) liftOut.textContent = p < .04 ? 'закрыт' : (p > .92 ? 'открыт' : 'снимается');
