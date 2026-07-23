@@ -690,6 +690,22 @@ model-viewer{
   }
   if (mvAsm) mvAsm.addEventListener('load', grabRoof);
 
+  /* Leaders were only redrawn on scroll, so dragging the model left them
+     pointing at stale positions. camera-change fires on every camera move —
+     user drags included — so the lines stay magnetised to their dots.
+     It fires many times per frame during a drag, so coalesce onto rAF. */
+  var camRedrawQueued = false;
+  if (mvAsm) {
+    mvAsm.addEventListener('camera-change', function(){
+      if (!infoActive || camRedrawQueued) return;
+      camRedrawQueued = true;
+      requestAnimationFrame(function(){
+        camRedrawQueued = false;
+        drawCallouts();
+      });
+    });
+  }
+
   function repaintAsm(){
     if (!asmScene) return;
     if (typeof asmScene.queueRender === 'function') asmScene.queueRender();
@@ -724,14 +740,14 @@ model-viewer{
     if (!W || !H) return;
     calloutSvg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
 
-    /* canvasPosition is in canvas pixels; on HiDPI that is not CSS pixels.
-       Scale by the model-viewer's own rendered size to stay aligned. */
+    /* queryHotspot projects using scene.width/height, which are CSS pixels of
+       the <model-viewer> element — NOT canvas backing-store pixels. So the only
+       correction needed is the element's offset inside the stage. Dividing by
+       canvas.width (device pixels) is what pushed the leaders off the dots on
+       HiDPI screens. */
     var mvRect = mvAsm.getBoundingClientRect();
     var stRect = exStage.getBoundingClientRect();
     var dx = mvRect.left - stRect.left, dy = mvRect.top - stRect.top;
-    var cv = mvAsm.shadowRoot && mvAsm.shadowRoot.querySelector('canvas');
-    var sx = (cv && cv.width)  ? mvRect.width  / cv.width  : 1;
-    var sy = (cv && cv.height) ? mvRect.height / cv.height : 1;
 
     /* 1st pass: project every hotspot and note where its label wants to sit */
     var items = [];
@@ -740,8 +756,8 @@ model-viewer{
       var side = CALLOUT_SIDES[key] || 'right';
       var hs = mvAsm.queryHotspot('hotspot-' + key);
       var ok = !!(hs && hs.canvasPosition);
-      var x = ok ? hs.canvasPosition.x * sx + dx : 0;
-      var y = ok ? hs.canvasPosition.y * sy + dy : 0;
+      var x = ok ? hs.canvasPosition.x + dx : 0;
+      var y = ok ? hs.canvasPosition.y + dy : 0;
       if (!isFinite(x) || !isFinite(y)) ok = false;
       items.push({ el: el, side: side, ok: ok, x: x, y: y,
                    h: el.offsetHeight || 56, w: el.offsetWidth || 200,
