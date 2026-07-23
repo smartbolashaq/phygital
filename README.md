@@ -32,3 +32,19 @@ python3 -m http.server 8000
 `models/car3.glb` — съёмная крыша
 
 Сжаты через gltfpack (meshopt): 63 МБ → 5.9 МБ без потери качества.
+
+## Важно: декодер meshopt
+
+Модели сжаты расширением `EXT_meshopt_compression`. `<model-viewer>` **не**
+включает декодер для него по умолчанию, поэтому в `<head>` задан путь:
+
+```html
+<script>
+  window.ModelViewerElement = window.ModelViewerElement || {};
+  window.ModelViewerElement.meshoptDecoderLocation = 'vendor/meshopt_decoder.js';
+</script>
+```
+
+Файл `vendor/meshopt_decoder.js` обязателен — без него в консоли будет ошибка
+`setMeshoptDecoder must be called before loading compressed files`,
+и модели не отрисуются.
