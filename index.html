@@ -230,6 +230,153 @@ model-viewer{
 .ex-copy h2 em{font-style:normal; color:var(--signal)}
 .ex-copy p{font-size:15.5px; transition:opacity .35s ease}
 
+/* ---------- software section: IDE window + phone ---------- */
+.pin-wrap.soft{height:400svh}
+.pin-wrap.soft .wrap{width:100%; max-width:1760px; padding:0 44px}
+.soft-stage{
+  position:relative; width:100%; height:min(68svh,660px); overflow:hidden;
+  border:1px solid var(--rule); border-radius:2px; background:
+    radial-gradient(ellipse at 50% 55%, rgba(76,201,240,.09), transparent 62%), var(--panel);
+}
+.app{
+  position:absolute; top:50%; left:50%;
+  transition:transform .5s cubic-bezier(.4,0,.2,1), opacity .5s ease;
+  will-change:transform,opacity;
+}
+
+/* ---- IDE window (light theme, as shipped) ---- */
+.ide{
+  width:min(880px,74%); transform:translate(-50%,-50%);
+  background:#F4F6FA; border-radius:6px; overflow:hidden;
+  box-shadow:0 30px 70px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.06);
+  font-family:var(--body); color:#1B2436;
+}
+.ide-bar{
+  display:flex; align-items:center; gap:14px; padding:9px 14px;
+  background:#1668C4; color:#fff; font-size:12.5px;
+}
+.ide-logo{
+  width:22px; height:22px; border-radius:5px; background:#fff; color:#1668C4;
+  font-weight:700; font-size:10.5px; display:grid; place-items:center; flex:none;
+}
+.ide-name{font-weight:700; letter-spacing:.01em}
+.ide-tab{opacity:.72; padding-bottom:2px}
+.ide-tab.on{opacity:1; font-weight:700; box-shadow:inset 0 -2px 0 #FFC53D}
+.ide-spacer{flex:1}
+.ide-lang{
+  background:rgba(255,255,255,.16); border-radius:4px; padding:3px 8px;
+  font-size:10.5px; letter-spacing:.04em;
+}
+.ide-lang b{background:#fff; color:#1668C4; border-radius:3px; padding:2px 5px; margin-right:5px}
+.ide-theme{opacity:.85; font-size:14px}
+
+.ide-tools{
+  display:flex; align-items:center; gap:9px; padding:9px 14px;
+  background:#fff; border-bottom:1px solid #DFE4EE; font-size:11.5px;
+}
+.ide-tools .btn{border-radius:4px; padding:6px 11px; font-weight:600; white-space:nowrap}
+.btn.check{background:#EDF1F8; color:#26324A; border:1px solid #D3DAE8}
+.btn.upload{background:#17864A; color:#fff; transition:background .25s, box-shadow .25s}
+.btn.upload.hot{background:#1FA85D; box-shadow:0 0 0 4px rgba(31,168,93,.24)}
+.btn.ghost{background:#EDF1F8; color:#40506E; border:1px solid #D3DAE8}
+.sel{
+  border:1px solid #D3DAE8; border-radius:4px; padding:6px 10px;
+  color:#40506E; background:#fff; white-space:nowrap;
+}
+
+.ide-body{display:grid; grid-template-columns:36% 64%; height:min(300px,34svh)}
+.ide-lesson{padding:16px 16px 8px; border-right:1px solid #DFE4EE; overflow:hidden}
+.ide-lesson h4{
+  font-family:var(--disp); font-size:16px; color:#1668C4;
+  text-transform:none; letter-spacing:0; margin-bottom:6px;
+}
+.ide-lesson p{font-size:11.5px; color:#5A6683; max-width:none; line-height:1.5; margin-bottom:10px}
+.lesson-label{font-size:11px; font-weight:700; color:#C1462B; margin-bottom:5px}
+.lesson-code{
+  font-family:var(--mono); font-size:10.5px; line-height:1.6; color:#26324A;
+  background:#EDF2FA; border:1px solid #D8E0EE; border-radius:4px; padding:8px 10px;
+  white-space:pre; overflow:hidden;
+}
+.ide-editor{background:#fff; padding:12px 14px; overflow:hidden}
+.code{
+  font-family:var(--mono); font-size:11.5px; line-height:1.62; color:#26324A;
+  white-space:pre; margin:0;
+}
+.code .c{color:#8A93A8}      /* comment */
+.code .k{color:#0B5FBF}      /* keyword */
+.code .f{color:#146C43}      /* function */
+.code .n{color:#B0451F}      /* number */
+.code .cur{
+  display:inline-block; width:7px; margin-left:1px;
+  border-bottom:2px solid #1668C4; animation:blink 1s steps(1) infinite;
+}
+@keyframes blink{50%{opacity:0}}
+
+.ide-out{background:#0E1220; padding:8px 14px 12px; min-height:74px}
+.out-tab{
+  font-size:10.5px; color:#7C87A2; margin-right:12px;
+  font-family:var(--mono); letter-spacing:.06em;
+}
+.out-tab.on{color:#fff}
+.out-log{
+  font-family:var(--mono); font-size:10.5px; line-height:1.65; color:#8FE3B0;
+  margin-top:6px; white-space:pre-line; min-height:44px;
+}
+
+/* ---- Android phone ---- */
+/* held in LANDSCAPE: two thumbs on the sliders, traps under the right thumb */
+.phone{
+  width:min(680px,58%); aspect-ratio:19.5/9;
+  transform:translate(-50%,-50%) translateX(60%);
+  opacity:0; pointer-events:none;
+}
+.phone-screen{
+  position:relative; width:100%; height:100%; border-radius:26px; overflow:hidden;
+  background:#0B0E18; border:7px solid #14161F;
+  box-shadow:0 26px 60px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.07);
+}
+.fpv{position:absolute; inset:0; width:100%; height:100%}
+.hud-tl-app{
+  position:absolute; top:12px; left:16px; z-index:3;
+  font-family:var(--mono); font-size:10px; letter-spacing:.06em; color:#CFE9F7;
+  text-shadow:0 1px 3px rgba(0,0,0,.8);
+}
+.hud-tl-app b{color:var(--signal)}
+.rec{
+  position:absolute; top:12px; right:16px; z-index:3; display:flex; align-items:center; gap:5px;
+  font-family:var(--mono); font-size:10px; letter-spacing:.1em; color:#FFD9D0;
+}
+.rec i{width:6px; height:6px; border-radius:50%; background:var(--hot); animation:pulse 1.4s infinite}
+@keyframes pulse{50%{opacity:.25}}
+
+.stick{position:absolute; z-index:3; background:rgba(9,12,20,.5); border:1px solid rgba(255,255,255,.14); backdrop-filter:blur(2px)}
+.stick i{position:absolute; background:var(--signal); border-radius:50%; box-shadow:0 0 10px rgba(76,201,240,.75)}
+.stick.vert{left:18px; top:20%; width:26px; height:60%; border-radius:14px}
+.stick.vert i{left:4px; width:18px; height:18px; top:50%; margin-top:-9px; transition:top .35s ease}
+.stick.horz{right:18px; bottom:16px; width:42%; height:26px; border-radius:14px}
+.stick.horz i{top:4px; width:18px; height:18px; left:50%; margin-left:-9px; transition:left .35s ease}
+.traps{position:absolute; right:18px; bottom:56px; z-index:3; display:flex; gap:10px}
+.trap{
+  width:34px; height:34px; border-radius:50%; display:grid; place-items:center;
+  font-family:var(--mono); font-size:9.5px; color:#BFD8E8;
+  background:rgba(9,12,20,.55); border:1px solid rgba(255,255,255,.16);
+  transition:background .2s, color .2s, box-shadow .2s;
+}
+.trap.fire{background:var(--hot); color:#fff; box-shadow:0 0 14px rgba(255,92,57,.75)}
+
+/* stage phases */
+.soft-stage.s2 .ide{transform:translate(-50%,-50%) scale(1.01)}
+.soft-stage.s3 .ide{transform:translate(-50%,-50%) translateX(-78%) scale(.9); opacity:0}
+.soft-stage.s3 .phone{transform:translate(-50%,-50%); opacity:1}
+
+.soft-meta{
+  display:flex; gap:26px; flex-wrap:wrap; margin-top:16px;
+  font-family:var(--mono); font-size:11px; letter-spacing:.06em; color:var(--dim);
+}
+.soft-meta .plat{display:inline-flex; align-items:center; gap:8px}
+.soft-meta svg{width:14px; height:14px; color:var(--signal); flex:none}
+.soft-meta .soon{margin-left:6px; color:#5C6480}
+
 /* ---------- telemetry readout strip ---------- */
 .telem{
   display:flex; gap:0; border:1px solid var(--rule); border-radius:2px;
@@ -309,6 +456,15 @@ model-viewer{
   .row{grid-template-columns:44px 1fr; gap:16px}
   .row p{grid-column:2}
   .mini-stage{height:48svh}
+  /* software section unpins: show both mockups stacked, no cross-fade */
+  .pin-wrap.soft{height:auto}
+  .soft-stage{height:auto; padding:24px 16px; display:grid; gap:24px; justify-items:center}
+  .app{position:static; transform:none!important; opacity:1!important}
+  .ide{width:100%}
+  .ide-body{grid-template-columns:1fr; height:auto}
+  .ide-lesson{border-right:0; border-bottom:1px solid #DFE4EE}
+  .phone{width:100%; pointer-events:none}
+  .soft-meta{gap:12px; flex-direction:column}
   .pin-wrap.tall{height:auto}
   .explode-stage{height:56svh; overflow:visible}
   /* section unpins on mobile: labels stack below the car instead of pointing */
@@ -440,7 +596,6 @@ model-viewer{
   </div>
 </div>
 
-<!-- ============ КОНСТРУКЦИЯ: разбор корпуса ============ -->
 <!-- ============ КОНСТРУКЦИЯ: разбор + выноски ============ -->
 <div class="pin-wrap tall" id="explodeWrap">
   <div class="pin">
@@ -506,32 +661,129 @@ model-viewer{
   </div>
 </div>
 
-<!-- ============ ИГРА ============ -->
-<section class="band">
-  <div class="wrap">
-    <div class="band-head reveal">
-      <div class="eyebrow">Игра</div>
-      <h2>Код превращается<br>в <em>игровую механику</em></h2>
-    </div>
-    <div class="rows reveal">
-      <div class="row">
-        <div class="row-n">FPV</div>
-        <div><h3>Вид от первого лица</h3></div>
-        <p>Курсовая камера транслирует видео на смартфон в реальном времени.</p>
+<!-- ============ СОФТ: код -> плата -> заезд ============ -->
+<div class="pin-wrap soft" id="softWrap">
+  <div class="pin">
+    <div class="wrap">
+      <div class="ex-copy">
+        <div class="eyebrow">Программное обеспечение</div>
+        <h2 id="softTitle">Пишешь <em>код</em></h2>
+        <p id="softText">Ученик открывает урок и дописывает код в готовую заготовку — методичка слева, редактор справа.</p>
       </div>
-      <div class="row">
-        <div class="row-n">TRAP</div>
-        <div><h3>Ловушки и эффекты</h3></div>
-        <p>Ученик сам программирует стробоскоп, сервопривод и другие модули.</p>
+
+      <div class="soft-stage" id="softStage">
+        <span class="corner tl"></span><span class="corner tr"></span>
+        <span class="corner bl"></span><span class="corner br"></span>
+
+        <!-- ---------- Phygital IDE (Windows) ---------- -->
+        <div class="app ide" id="ideApp">
+          <div class="ide-bar">
+            <span class="ide-logo">SB</span>
+            <span class="ide-name">Phygital IDE</span>
+            <span class="ide-tab" id="tabComp">Компилятор</span>
+            <span class="ide-tab on" id="tabLes">Уроки</span>
+            <span class="ide-spacer"></span>
+            <span class="ide-lang"><b>РУС</b>ҚАЗ</span>
+            <span class="ide-theme" title="Тема оформления">◐</span>
+          </div>
+
+          <div class="ide-tools">
+            <span class="btn check">✓ Проверить</span>
+            <span class="btn upload" id="btnUpload">→ Загрузить на плату</span>
+            <span class="sel">Arduino Nano ▾</span>
+            <span class="sel">COM7 ▾</span>
+            <span class="ide-spacer"></span>
+            <span class="btn ghost">Проекты</span>
+          </div>
+
+          <div class="ide-body">
+            <div class="ide-lesson">
+              <h4>Урок 2 — Мигающий светодиод</h4>
+              <p>Заставим встроенный светодиод платы (контакт 13) мигать раз в секунду.</p>
+              <div class="lesson-label">Код для loop()</div>
+              <pre class="lesson-code">digitalWrite(13, HIGH);
+delay(1000);
+digitalWrite(13, LOW);
+delay(1000);</pre>
+            </div>
+            <div class="ide-editor">
+              <pre class="code" id="ideCode"></pre>
+            </div>
+          </div>
+
+          <div class="ide-out">
+            <span class="out-tab on">Вывод</span>
+            <span class="out-tab">Монитор порта</span>
+            <div class="out-log" id="ideLog"></div>
+          </div>
+        </div>
+
+        <!-- ---------- PhygitalMachines (Android) ---------- -->
+        <div class="app phone" id="phoneApp">
+          <div class="phone-screen">
+            <!-- first-person view from the car's camera -->
+            <svg class="fpv" viewBox="0 0 760 350" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+              <defs>
+                <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#141A2B"/><stop offset="1" stop-color="#1E2740"/>
+                </linearGradient>
+                <linearGradient id="road" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#20222E"/><stop offset="1" stop-color="#2C2F3E"/>
+                </linearGradient>
+              </defs>
+              <rect width="760" height="132" fill="url(#sky)"/>
+              <rect y="132" width="760" height="218" fill="url(#road)"/>
+              <!-- verge either side of the track, converging on the horizon -->
+              <polygon points="380,132 150,350 -40,350" fill="#171A24"/>
+              <polygon points="380,132 610,350 800,350" fill="#171A24"/>
+              <polyline points="380,132 154,350" stroke="#4CC9F0" stroke-width="3" fill="none" opacity=".85"/>
+              <polyline points="380,132 606,350" stroke="#4CC9F0" stroke-width="3" fill="none" opacity=".85"/>
+              <!-- dashed centre line, spacing opens up toward the camera -->
+              <g stroke="#EEF1F8" stroke-width="4" opacity=".85">
+                <line x1="380" y1="144" x2="380" y2="156"/>
+                <line x1="380" y1="172" x2="380" y2="192"/>
+                <line x1="380" y1="214" x2="380" y2="246"/>
+                <line x1="380" y1="272" x2="380" y2="318"/>
+              </g>
+              <!-- rival car ahead -->
+              <g transform="translate(380 196)">
+                <ellipse cx="0" cy="26" rx="44" ry="6" fill="#0A0C12" opacity=".55"/>
+                <rect x="-40" y="-2" width="80" height="28" rx="10" fill="#2A2547"/>
+                <rect x="-29" y="-18" width="58" height="21" rx="8" fill="#332C55"/>
+                <rect x="-24" y="-14" width="48" height="13" rx="5" fill="#0E1220" opacity=".85"/>
+                <circle cx="-27" cy="18" r="5.5" fill="#FF5C39"/>
+                <circle cx="27" cy="18" r="5.5" fill="#FF5C39"/>
+                <rect x="-32" y="-25" width="64" height="5" rx="2" fill="#1B1B2C"/>
+              </g>
+            </svg>
+
+            <!-- HUD -->
+            <div class="hud-tl-app"><b id="fpsOut">58</b> FPS · <span>RSSI −41 dBm</span></div>
+            <div class="rec"><i></i>LIVE</div>
+
+            <!-- vertical throttle on the left -->
+            <div class="stick vert"><i id="throttle"></i></div>
+            <!-- three trap buttons above the steering slider -->
+            <div class="traps">
+              <span class="trap" id="trap1">01</span>
+              <span class="trap" id="trap2">02</span>
+              <span class="trap" id="trap3">03</span>
+            </div>
+            <!-- horizontal steering at the bottom -->
+            <div class="stick horz"><i id="steer"></i></div>
+          </div>
+        </div>
+
+        <div class="stage-tag">Этап&nbsp;<b id="softStep">01 · код</b></div>
       </div>
-      <div class="row">
-        <div class="row-n">IR</div>
-        <div><h3>ИК-система попаданий</h3></div>
-        <p>Попадание переводит машину в штрафной режим на несколько секунд.</p>
+
+      <div class="soft-meta">
+        <span class="plat"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 5.5 10.2 4.5v7.1H3V5.5Zm0 13L10.2 19.5v-7H3v6ZM11.4 4.3 21 3v8.6h-9.6V4.3Zm0 15.4L21 21v-8.5h-9.6v7.2Z"/></svg>Phygital IDE — Windows</span>
+        <span class="plat"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6 9h12v8.2a1.3 1.3 0 0 1-1.3 1.3H7.3A1.3 1.3 0 0 1 6 17.2V9Zm-2.4.2a1.2 1.2 0 0 1 2.4 0v5.2a1.2 1.2 0 0 1-2.4 0V9.2Zm14.4 0a1.2 1.2 0 0 1 2.4 0v5.2a1.2 1.2 0 0 1-2.4 0V9.2ZM9 19.4h2v2.2a1.1 1.1 0 0 1-2.2 0v-2.2Zm4 0h2v2.2a1.1 1.1 0 0 1-2.2 0v-2.2ZM8.4 3.6l.9 1.6a5.9 5.9 0 0 1 5.4 0l.9-1.6a.35.35 0 1 1 .6.34l-.87 1.55A5.6 5.6 0 0 1 18 8H6a5.6 5.6 0 0 1 2.67-2.5L7.8 3.94a.35.35 0 1 1 .6-.34ZM9.3 6.6a.6.6 0 1 0 0-1.2.6.6 0 0 0 0 1.2Zm5.4 0a.6.6 0 1 0 0-1.2.6.6 0 0 0 0 1.2Z"/></svg>PhygitalMachines — Android<span class="soon">· iOS скоро</span></span>
       </div>
     </div>
   </div>
-</section>
+</div>
 
 <!-- ============ ЧЕМУ УЧИТ ============ -->
 <section class="band">
@@ -909,13 +1161,133 @@ model-viewer{
     }
   }
 
+  /* ---------- software section: code -> upload -> drive ---------- */
+  var softWrap = document.getElementById('softWrap');
+  var softStage = document.getElementById('softStage');
+  var softTitle = document.getElementById('softTitle');
+  var softText = document.getElementById('softText');
+  var softStep = document.getElementById('softStep');
+  var ideCode = document.getElementById('ideCode');
+  var ideLog = document.getElementById('ideLog');
+  var btnUpload = document.getElementById('btnUpload');
+  var throttle = document.getElementById('throttle');
+  var steer = document.getElementById('steer');
+  var fpsOut = document.getElementById('fpsOut');
+  var traps = [document.getElementById('trap1'),
+               document.getElementById('trap2'),
+               document.getElementById('trap3')];
+
+  /* The editor text is typed out as the first phase scrolls. Written as tokens
+     so the syntax colouring survives partial reveals. */
+  var CODE = [
+    ['c', '/* ===== Phygital \u2014 \u043e\u049b\u0443 \u0436\u043e\u0431\u0430\u0441\u044b / \u0443\u0447\u0435\u0431\u043d\u044b\u0439 \u043f\u0440\u043e\u0435\u043a\u0442 ===== */\n'],
+    ['k', '#include '], ['', '<Arduino.h>\n\n'],
+    ['k', 'void '], ['f', 'setup'], ['', '() {\n'],
+    ['', '  Serial.'], ['f', 'begin'], ['', '('], ['n', '9600'], ['', ');\n'],
+    ['c', '  // \u041f\u0438\u0448\u0438\u0442\u0435 \u0441\u0432\u043e\u0439 \u043a\u043e\u0434 \u0437\u0434\u0435\u0441\u044c:\n'],
+    ['', '  '], ['f', 'pinMode'], ['', '('], ['n', '13'], ['', ', OUTPUT);\n}\n\n'],
+    ['k', 'void '], ['f', 'loop'], ['', '() {\n'],
+    ['c', '  // \u041f\u0438\u0448\u0438\u0442\u0435 \u0441\u0432\u043e\u0439 \u043a\u043e\u0434 \u0437\u0434\u0435\u0441\u044c:\n'],
+    ['', '  '], ['f', 'digitalWrite'], ['', '('], ['n', '13'], ['', ', HIGH);\n'],
+    ['', '  '], ['f', 'delay'], ['', '('], ['n', '1000'], ['', ');\n'],
+    ['', '  '], ['f', 'digitalWrite'], ['', '('], ['n', '13'], ['', ', LOW);\n'],
+    ['', '  '], ['f', 'delay'], ['', '('], ['n', '1000'], ['', ');\n}']
+  ];
+  var CODE_LEN = CODE.reduce(function(s, t){ return s + t[1].length; }, 0);
+
+  function esc(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function renderCode(chars){
+    var out = '', used = 0;
+    for (var i = 0; i < CODE.length && used < chars; i++) {
+      var cls = CODE[i][0], txt = CODE[i][1];
+      var take = Math.min(txt.length, chars - used);
+      var piece = esc(txt.slice(0, take));
+      out += cls ? '<span class="' + cls + '">' + piece + '</span>' : piece;
+      used += take;
+    }
+    return out + '<span class="cur"></span>';
+  }
+
+  var UPLOAD_LOG = [
+    '> \u041a\u043e\u043c\u043f\u0438\u043b\u044f\u0446\u0438\u044f\u2026',
+    '  \u0421\u043a\u0435\u0442\u0447 \u0437\u0430\u043d\u0438\u043c\u0430\u0435\u0442 1284 \u0431\u0430\u0439\u0442 (4%)',
+    '> \u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430 \u043d\u0430 Arduino Nano (COM7)\u2026',
+    '  \u0413\u043e\u0442\u043e\u0432\u043e. \u041f\u043b\u0430\u0442\u0430 \u043f\u0435\u0440\u0435\u0437\u0430\u043f\u0443\u0449\u0435\u043d\u0430.'
+  ];
+
+  var SOFT_COPY = [
+    ['\u041f\u0438\u0448\u0435\u0448\u044c <em>\u043a\u043e\u0434</em>',
+     '\u0423\u0447\u0435\u043d\u0438\u043a \u043e\u0442\u043a\u0440\u044b\u0432\u0430\u0435\u0442 \u0443\u0440\u043e\u043a \u0438 \u0434\u043e\u043f\u0438\u0441\u044b\u0432\u0430\u0435\u0442 \u043a\u043e\u0434 \u0432 \u0433\u043e\u0442\u043e\u0432\u0443\u044e \u0437\u0430\u0433\u043e\u0442\u043e\u0432\u043a\u0443 \u2014 \u043c\u0435\u0442\u043e\u0434\u0438\u0447\u043a\u0430 \u0441\u043b\u0435\u0432\u0430, \u0440\u0435\u0434\u0430\u043a\u0442\u043e\u0440 \u0441\u043f\u0440\u0430\u0432\u0430.',
+     '01 \u00b7 \u043a\u043e\u0434'],
+    ['\u0417\u0430\u0433\u0440\u0443\u0436\u0430\u0435\u0448\u044c <em>\u043d\u0430 \u043f\u043b\u0430\u0442\u0443</em>',
+     '\u041e\u0434\u043d\u0430 \u043a\u043d\u043e\u043f\u043a\u0430 \u2014 \u0441\u0440\u0435\u0434\u0430 \u0441\u043e\u0431\u0438\u0440\u0430\u0435\u0442 \u0441\u043a\u0435\u0442\u0447 \u0438 \u043e\u0442\u043f\u0440\u0430\u0432\u043b\u044f\u0435\u0442 \u0435\u0433\u043e \u0432 \u043c\u0430\u0448\u0438\u043d\u0443 \u043f\u043e USB. \u041a\u043e\u043c\u043f\u0438\u043b\u044f\u0442\u043e\u0440 \u0438 \u0443\u0440\u043e\u043a\u0438 \u0436\u0438\u0432\u0443\u0442 \u0432 \u043e\u0434\u043d\u043e\u0439 \u043f\u0440\u043e\u0433\u0440\u0430\u043c\u043c\u0435.',
+     '02 \u00b7 \u0437\u0430\u0433\u0440\u0443\u0437\u043a\u0430'],
+    ['\u0413\u043e\u043d\u044f\u0435\u0448\u044c <em>\u0441 \u0442\u0435\u043b\u0435\u0444\u043e\u043d\u0430</em>',
+     '\u0412\u0438\u0434\u0435\u043e \u0441 \u043a\u0443\u0440\u0441\u043e\u0432\u043e\u0439 \u043a\u0430\u043c\u0435\u0440\u044b \u0432 \u0440\u0435\u0430\u043b\u044c\u043d\u043e\u043c \u0432\u0440\u0435\u043c\u0435\u043d\u0438, \u0434\u0432\u0430 \u043f\u043e\u043b\u0437\u0443\u043d\u043a\u0430 \u0443\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u044f \u0438 \u0442\u0440\u0438 \u043a\u043d\u043e\u043f\u043a\u0438 \u043b\u043e\u0432\u0443\u0448\u0435\u043a. \u0418\u041a-\u043f\u043e\u043f\u0430\u0434\u0430\u043d\u0438\u0435 \u2014 \u0448\u0442\u0440\u0430\u0444\u043d\u043e\u0439 \u0440\u0435\u0436\u0438\u043c.',
+     '03 \u00b7 \u0437\u0430\u0435\u0437\u0434']
+  ];
+  var lastSoftPhase = -1, lastChars = -1, lastLogLines = -1;
+
+  function onSoft(){
+    if (!softWrap || !softStage) return;
+    var r = softWrap.getBoundingClientRect();
+    var total = r.height - window.innerHeight;
+    var p = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 0;
+
+    /* 0.00-0.42 typing | 0.42-0.62 upload | 0.62-1.00 driving */
+    var pType = Math.min(1, p / 0.42);
+    var pUp   = Math.min(1, Math.max(0, (p - 0.42) / 0.20));
+    var pRun  = Math.min(1, Math.max(0, (p - 0.62) / 0.38));
+
+    if (ideCode) {
+      var chars = reduce ? CODE_LEN : Math.round(pType * CODE_LEN);
+      if (chars !== lastChars) { lastChars = chars; ideCode.innerHTML = renderCode(chars); }
+    }
+
+    if (btnUpload) btnUpload.classList.toggle('hot', pUp > 0.05 && pUp < 1);
+    if (ideLog) {
+      var n = Math.floor(pUp * (UPLOAD_LOG.length + 0.4));
+      n = Math.min(UPLOAD_LOG.length, n);
+      if (n !== lastLogLines) {
+        lastLogLines = n;
+        ideLog.textContent = UPLOAD_LOG.slice(0, n).join('\n');
+      }
+    }
+
+    var phase = pRun > 0.02 ? 2 : (pUp > 0.02 ? 1 : 0);
+    softStage.classList.toggle('s2', phase === 1);
+    softStage.classList.toggle('s3', phase === 2);
+
+    if (phase === 2) {
+      /* drive the on-screen controls so the phone never looks like a still */
+      var t = pRun * Math.PI * 2;
+      if (throttle) throttle.style.top = (50 - Math.sin(t * 1.3) * 32) + '%';
+      if (steer) steer.style.left = (50 + Math.sin(t * 0.9) * 34) + '%';
+      if (fpsOut) fpsOut.textContent = String(56 + Math.round(Math.sin(t * 3) * 3));
+      var live = Math.floor(pRun * 7) % 3;
+      traps.forEach(function(el, i){ if (el) el.classList.toggle('fire', i === live && pRun > 0.12); });
+    } else {
+      traps.forEach(function(el){ if (el) el.classList.remove('fire'); });
+    }
+
+    if (phase !== lastSoftPhase) {
+      lastSoftPhase = phase;
+      if (softTitle) softTitle.innerHTML = SOFT_COPY[phase][0];
+      if (softText) softText.textContent = SOFT_COPY[phase][1];
+      if (softStep) softStep.textContent = SOFT_COPY[phase][2];
+    }
+  }
+
   var ticking = false;
   window.addEventListener('scroll', function(){
-    if (!ticking) { window.requestAnimationFrame(function(){ onScroll(); onExplode(); ticking = false; }); ticking = true; }
+    if (!ticking) { window.requestAnimationFrame(function(){ onScroll(); onExplode(); onSoft(); ticking = false; }); ticking = true; }
   }, {passive:true});
-  window.addEventListener('resize', function(){ onScroll(); onExplode(); }, {passive:true});
+  window.addEventListener('resize', function(){ onScroll(); onExplode(); onSoft(); }, {passive:true});
   onScroll();
   onExplode();
+  onSoft();
 
   /* ---------- reveal on enter ---------- */
   if ('IntersectionObserver' in window) {
