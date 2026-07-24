@@ -244,75 +244,108 @@ model-viewer{
   will-change:transform,opacity;
 }
 
-/* ---- IDE window (light theme, as shipped) ---- */
+/* ---- IDE window. Themed via CSS vars so the mockup can show either the
+       light build or the dark one the product ships with. ---- */
 .ide{
+  /* dark theme (default on this page) */
+  --i-bg:#12141C;        --i-bar:#151A28;      --i-bar-tx:#E8ECF6;
+  --i-surface:#171B26;   --i-edge:#252B3B;     --i-tx:#DDE3F0;
+  --i-muted:#8892AA;     --i-accent:#4CC9F0;   --i-accent-tx:#0B0E16;
+  --i-inset:#0F131D;     --i-chip:#1E2434;
+  --i-c:#6C7690;         --i-k:#7FB4FF;        --i-f:#68D39B;  --i-n:#FFB27A;
+  --i-lesson-h:#4CC9F0;  --i-lesson-lbl:#FF8B66;
+
   width:min(880px,74%); transform:translate(-50%,-50%);
-  background:#F4F6FA; border-radius:6px; overflow:hidden;
-  box-shadow:0 30px 70px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.06);
-  font-family:var(--body); color:#1B2436;
+  background:var(--i-bg); border-radius:6px; overflow:hidden;
+  box-shadow:0 30px 70px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.05);
+  font-family:var(--body); color:var(--i-tx);
+}
+.ide.light{
+  --i-bg:#F4F6FA;        --i-bar:#1668C4;      --i-bar-tx:#FFFFFF;
+  --i-surface:#FFFFFF;   --i-edge:#DFE4EE;     --i-tx:#26324A;
+  --i-muted:#5A6683;     --i-accent:#1668C4;   --i-accent-tx:#FFFFFF;
+  --i-inset:#EDF2FA;     --i-chip:#EDF1F8;
+  --i-c:#8A93A8;         --i-k:#0B5FBF;        --i-f:#146C43;  --i-n:#B0451F;
+  --i-lesson-h:#1668C4;  --i-lesson-lbl:#C1462B;
 }
 .ide-bar{
   display:flex; align-items:center; gap:14px; padding:9px 14px;
-  background:#1668C4; color:#fff; font-size:12.5px;
+  background:var(--i-bar); color:var(--i-bar-tx); font-size:12.5px;
+  border-bottom:1px solid var(--i-edge);
 }
 .ide-logo{
-  width:22px; height:22px; border-radius:5px; background:#fff; color:#1668C4;
+  width:22px; height:22px; border-radius:5px;
+  background:var(--i-accent); color:var(--i-accent-tx);
   font-weight:700; font-size:10.5px; display:grid; place-items:center; flex:none;
 }
 .ide-name{font-weight:700; letter-spacing:.01em}
-.ide-tab{opacity:.72; padding-bottom:2px}
-.ide-tab.on{opacity:1; font-weight:700; box-shadow:inset 0 -2px 0 #FFC53D}
+.ide-tab{opacity:.66; padding-bottom:2px}
+.ide-tab.on{opacity:1; font-weight:700; box-shadow:inset 0 -2px 0 var(--i-accent)}
 .ide-spacer{flex:1}
 .ide-lang{
-  background:rgba(255,255,255,.16); border-radius:4px; padding:3px 8px;
+  background:rgba(255,255,255,.10); border-radius:4px; padding:3px 8px;
   font-size:10.5px; letter-spacing:.04em;
 }
-.ide-lang b{background:#fff; color:#1668C4; border-radius:3px; padding:2px 5px; margin-right:5px}
-.ide-theme{opacity:.85; font-size:14px}
+.ide.light .ide-lang{background:rgba(255,255,255,.16)}
+.ide-lang b{
+  background:var(--i-accent); color:var(--i-accent-tx);
+  border-radius:3px; padding:2px 5px; margin-right:5px;
+}
+.ide-theme{
+  opacity:.85; font-size:14px; line-height:1; cursor:pointer;
+  background:rgba(255,255,255,.10); color:inherit; border:0;
+  border-radius:4px; padding:4px 7px; font-family:inherit;
+  pointer-events:auto; transition:opacity .2s, background .2s;
+}
+.ide-theme:hover{opacity:1; background:rgba(255,255,255,.2)}
 
 .ide-tools{
   display:flex; align-items:center; gap:9px; padding:9px 14px;
-  background:#fff; border-bottom:1px solid #DFE4EE; font-size:11.5px;
+  background:var(--i-surface); border-bottom:1px solid var(--i-edge); font-size:11.5px;
 }
 .ide-tools .btn{border-radius:4px; padding:6px 11px; font-weight:600; white-space:nowrap}
-.btn.check{background:#EDF1F8; color:#26324A; border:1px solid #D3DAE8}
+.btn.check{background:var(--i-chip); color:var(--i-tx); border:1px solid var(--i-edge)}
 .btn.upload{background:#17864A; color:#fff; transition:background .25s, box-shadow .25s}
-.btn.upload.hot{background:#1FA85D; box-shadow:0 0 0 4px rgba(31,168,93,.24)}
-.btn.ghost{background:#EDF1F8; color:#40506E; border:1px solid #D3DAE8}
+.btn.upload.hot{background:#1FA85D; box-shadow:0 0 0 4px rgba(31,168,93,.28)}
+.btn.ghost{background:var(--i-chip); color:var(--i-muted); border:1px solid var(--i-edge)}
 .sel{
-  border:1px solid #D3DAE8; border-radius:4px; padding:6px 10px;
-  color:#40506E; background:#fff; white-space:nowrap;
+  border:1px solid var(--i-edge); border-radius:4px; padding:6px 10px;
+  color:var(--i-muted); background:var(--i-surface); white-space:nowrap;
 }
 
 .ide-body{display:grid; grid-template-columns:36% 64%; height:min(300px,34svh)}
-.ide-lesson{padding:16px 16px 8px; border-right:1px solid #DFE4EE; overflow:hidden}
+.ide-lesson{
+  padding:16px 16px 8px; border-right:1px solid var(--i-edge);
+  background:var(--i-bg); overflow:hidden;
+}
 .ide-lesson h4{
-  font-family:var(--disp); font-size:16px; color:#1668C4;
+  font-family:var(--disp); font-size:16px; color:var(--i-lesson-h);
   text-transform:none; letter-spacing:0; margin-bottom:6px;
 }
-.ide-lesson p{font-size:11.5px; color:#5A6683; max-width:none; line-height:1.5; margin-bottom:10px}
-.lesson-label{font-size:11px; font-weight:700; color:#C1462B; margin-bottom:5px}
+.ide-lesson p{font-size:11.5px; color:var(--i-muted); max-width:none; line-height:1.5; margin-bottom:10px}
+.lesson-label{font-size:11px; font-weight:700; color:var(--i-lesson-lbl); margin-bottom:5px}
 .lesson-code{
-  font-family:var(--mono); font-size:10.5px; line-height:1.6; color:#26324A;
-  background:#EDF2FA; border:1px solid #D8E0EE; border-radius:4px; padding:8px 10px;
+  font-family:var(--mono); font-size:10.5px; line-height:1.6; color:var(--i-tx);
+  background:var(--i-inset); border:1px solid var(--i-edge); border-radius:4px; padding:8px 10px;
   white-space:pre; overflow:hidden;
 }
-.ide-editor{background:#fff; padding:12px 14px; overflow:hidden}
+.ide-editor{background:var(--i-surface); padding:12px 14px; overflow:hidden}
 .code{
-  font-family:var(--mono); font-size:11.5px; line-height:1.62; color:#26324A;
+  font-family:var(--mono); font-size:11.5px; line-height:1.62; color:var(--i-tx);
   white-space:pre; margin:0;
 }
-.code .c{color:#8A93A8}      /* comment */
-.code .k{color:#0B5FBF}      /* keyword */
-.code .f{color:#146C43}      /* function */
-.code .n{color:#B0451F}      /* number */
+.code .c{color:var(--i-c)}      /* comment */
+.code .k{color:var(--i-k)}      /* keyword */
+.code .f{color:var(--i-f)}      /* function */
+.code .n{color:var(--i-n)}      /* number */
 .code .cur{
   display:inline-block; width:7px; margin-left:1px;
-  border-bottom:2px solid #1668C4; animation:blink 1s steps(1) infinite;
+  border-bottom:2px solid var(--i-accent); animation:blink 1s steps(1) infinite;
 }
 @keyframes blink{50%{opacity:0}}
 
-.ide-out{background:#0E1220; padding:8px 14px 12px; min-height:74px}
+.ide-out{background:var(--i-inset); border-top:1px solid var(--i-edge); padding:8px 14px 12px; min-height:74px}
+.ide.light .ide-out{background:#0E1220; border-top-color:#0E1220}
 .out-tab{
   font-size:10.5px; color:#7C87A2; margin-right:12px;
   font-family:var(--mono); letter-spacing:.06em;
@@ -684,7 +717,7 @@ model-viewer{
             <span class="ide-tab on" id="tabLes">Уроки</span>
             <span class="ide-spacer"></span>
             <span class="ide-lang"><b>РУС</b>ҚАЗ</span>
-            <span class="ide-theme" title="Тема оформления">◐</span>
+            <button class="ide-theme" id="ideTheme" type="button" title="Светлая / тёмная тема" aria-label="Переключить тему">◐</button>
           </div>
 
           <div class="ide-tools">
@@ -778,7 +811,7 @@ delay(1000);</pre>
       </div>
 
       <div class="soft-meta">
-        <span class="plat"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 5.5 10.2 4.5v7.1H3V5.5Zm0 13L10.2 19.5v-7H3v6ZM11.4 4.3 21 3v8.6h-9.6V4.3Zm0 15.4L21 21v-8.5h-9.6v7.2Z"/></svg>Phygital IDE — Windows</span>
+        <span class="plat"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 5.5 10.2 4.5v7.1H3V5.5Zm0 13L10.2 19.5v-7H3v6ZM11.4 4.3 21 3v8.6h-9.6V4.3Zm0 15.4L21 21v-8.5h-9.6v7.2Z"/></svg>Phygital IDE — Windows<span class="soon">· тёмная и светлая тема</span></span>
         <span class="plat"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6 9h12v8.2a1.3 1.3 0 0 1-1.3 1.3H7.3A1.3 1.3 0 0 1 6 17.2V9Zm-2.4.2a1.2 1.2 0 0 1 2.4 0v5.2a1.2 1.2 0 0 1-2.4 0V9.2Zm14.4 0a1.2 1.2 0 0 1 2.4 0v5.2a1.2 1.2 0 0 1-2.4 0V9.2ZM9 19.4h2v2.2a1.1 1.1 0 0 1-2.2 0v-2.2Zm4 0h2v2.2a1.1 1.1 0 0 1-2.2 0v-2.2ZM8.4 3.6l.9 1.6a5.9 5.9 0 0 1 5.4 0l.9-1.6a.35.35 0 1 1 .6.34l-.87 1.55A5.6 5.6 0 0 1 18 8H6a5.6 5.6 0 0 1 2.67-2.5L7.8 3.94a.35.35 0 1 1 .6-.34ZM9.3 6.6a.6.6 0 1 0 0-1.2.6.6 0 0 0 0 1.2Zm5.4 0a.6.6 0 1 0 0-1.2.6.6 0 0 0 0 1.2Z"/></svg>PhygitalMachines — Android<span class="soon">· iOS скоро</span></span>
       </div>
     </div>
@@ -1278,6 +1311,19 @@ delay(1000);</pre>
       if (softText) softText.textContent = SOFT_COPY[phase][1];
       if (softStep) softStep.textContent = SOFT_COPY[phase][2];
     }
+  }
+
+  /* The shipped IDE has a light/dark switch, so the mockup carries a working
+     one too. Dark is the default here because the page around it is dark. */
+  var ideTheme = document.getElementById('ideTheme');
+  var ideApp = document.getElementById('ideApp');
+  if (ideTheme && ideApp) {
+    ideTheme.addEventListener('click', function(e){
+      e.preventDefault();
+      var light = ideApp.classList.toggle('light');
+      ideTheme.textContent = light ? '\u25d1' : '\u25d0';
+      ideTheme.setAttribute('aria-pressed', light ? 'true' : 'false');
+    });
   }
 
   var ticking = false;
