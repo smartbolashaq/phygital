@@ -672,6 +672,7 @@ model-viewer{
 
   var roofNode = null, roofY0 = 0, roofSpan = 1, asmScene = null;
   var roofMats = [];   // materials we fade out in phase 2
+  var alphaMats = [];  // subset authored with alpha blending — never force opaque
 
   function grabRoof(){
     if (!mvAsm || roofNode) return;
@@ -689,24 +690,21 @@ model-viewer{
       /* Two problems solved in one pass:
          1. glTF reuses material objects — the roof's paint is the SAME object as
             the chassis paint, so fading it directly would fade the whole car.
-         2. The window "decals" sit ~0.00007 units off the roof panel, far too
-            close for the depth buffer to separate, which showed up as flickering
-            black triangles.
-         So: give every roof mesh its own material clone, and push the decals
-         forward in depth only (polygonOffset leaves geometry untouched). */
+         2. The window "decals" are rectangular planes whose window shape lives in
+            the PNG's alpha channel (alphaMode=BLEND). They must stay blended at
+            all times: forcing transparent=false made the cut-out areas render as
+            solid black triangles.
+         So: clone every roof material, and remember which ones were already
+         transparent so the fade logic never switches their blending off. */
       roofNode.traverse(function(o){
         if (!o.material) return;
-        var isDecal = !!o.name && o.name.indexOf('Decal') !== -1;
         var list = Array.isArray(o.material) ? o.material : [o.material];
         var clones = list.map(function(m){
           var c = m.clone();
-          if (isDecal) {
-            c.polygonOffset = true;
-            c.polygonOffsetFactor = -2;
-            c.polygonOffsetUnits = -2;
-          }
           c.needsUpdate = true;
           roofMats.push(c);
+          /* material authored with alpha blending (window cut-outs) */
+          if (m.transparent) alphaMats.push(c);
           return c;
         });
         o.material = Array.isArray(o.material) ? clones : clones[0];
@@ -870,9 +868,14 @@ model-viewer{
       var fading = pFade > 0.001 && pFade < 0.999;
       roofNode.visible = pFade < 0.999;
       roofMats.forEach(function(m){
-        if (m.transparent !== fading) {
-          m.transparent = fading;
-          m.depthWrite = !fading;
+        /* window decals carry their shape in the PNG alpha channel, so they must
+           stay blended even at full opacity — otherwise the cut-out areas paint
+           solid black. Only genuinely opaque parts get toggled. */
+        var keepBlended = alphaMats.indexOf(m) !== -1;
+        var want = fading || keepBlended;
+        if (m.transparent !== want) {
+          m.transparent = want;
+          m.depthWrite = !want;
           m.needsUpdate = true;     // material recompiles when this flag flips
         }
         m.opacity = fading ? (1 - pFade) : 1;
