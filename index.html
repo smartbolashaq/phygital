@@ -329,10 +329,16 @@ model-viewer{
   background:var(--i-inset); border:1px solid var(--i-edge); border-radius:4px; padding:8px 10px;
   white-space:pre; overflow:hidden;
 }
-.ide-editor{background:var(--i-surface); padding:12px 14px; overflow:hidden}
+.ide-editor{background:var(--i-surface); padding:12px 14px 12px 0; overflow:hidden; display:flex; gap:12px}
+.ide-gutter{
+  flex:none; text-align:right; padding-left:14px;
+  font-family:var(--mono); font-size:11.5px; line-height:1.62;
+  color:var(--i-muted); opacity:.5; user-select:none;
+  border-right:1px solid var(--i-edge);
+}
 .code{
   font-family:var(--mono); font-size:11.5px; line-height:1.62; color:var(--i-tx);
-  white-space:pre; margin:0;
+  white-space:pre; margin:0; flex:1; min-width:0;
 }
 .code .c{color:var(--i-c)}      /* comment */
 .code .k{color:var(--i-k)}      /* keyword */
@@ -356,34 +362,62 @@ model-viewer{
   margin-top:6px; white-space:pre-line; min-height:44px;
 }
 
-/* ---- Android phone ---- */
-/* held in LANDSCAPE: two thumbs on the sliders, traps under the right thumb */
+/* ---- Android phone (landscape, held with two thumbs) ---- */
 .phone{
   width:min(680px,58%); aspect-ratio:19.5/9;
   transform:translate(-50%,-50%) translateX(60%);
   opacity:0; pointer-events:none;
 }
+/* metallic outer body */
+.phone-body{
+  position:relative; width:100%; height:100%; border-radius:34px;
+  background:linear-gradient(158deg,#2A2E3A 0%,#171A22 42%,#101219 100%);
+  padding:9px;
+  box-shadow:
+    0 30px 70px rgba(0,0,0,.62),
+    0 2px 0 rgba(255,255,255,.06) inset,
+    0 0 0 1px rgba(0,0,0,.5);
+}
+/* side buttons on the top edge (landscape: power + volume) */
+.phone-body::before{
+  content:""; position:absolute; top:-2px; right:88px; width:52px; height:3px;
+  border-radius:2px; background:#0C0E14;
+  box-shadow:120px 0 0 #0C0E14, 190px 0 0 #0C0E14;
+}
 .phone-screen{
   position:relative; width:100%; height:100%; border-radius:26px; overflow:hidden;
-  background:#0B0E18; border:7px solid #14161F;
-  box-shadow:0 26px 60px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.07);
+  background:#0B0E18;
+  box-shadow:0 0 0 2px #05060A, 0 0 22px rgba(0,0,0,.6) inset;
+}
+/* punch-hole selfie camera on the left edge (landscape) */
+.phone-notch{
+  position:absolute; top:50%; left:11px; width:11px; height:11px; z-index:4;
+  transform:translateY(-50%); border-radius:50%;
+  background:radial-gradient(circle at 40% 35%, #2B3550 0 30%, #070910 70%);
+  box-shadow:0 0 0 2px rgba(0,0,0,.6), 0 0 6px rgba(76,201,240,.25);
+}
+/* diagonal glass glare across the screen */
+.phone-glare{
+  position:absolute; inset:0; z-index:5; pointer-events:none; border-radius:26px;
+  background:linear-gradient(122deg, rgba(255,255,255,.10) 0%, rgba(255,255,255,0) 22%, rgba(255,255,255,0) 78%, rgba(255,255,255,.05) 100%);
 }
 .fpv{position:absolute; inset:0; width:100%; height:100%}
 .hud-tl-app{
-  position:absolute; top:12px; left:16px; z-index:3;
+  position:absolute; top:12px; left:24px; z-index:3;
   font-family:var(--mono); font-size:10px; letter-spacing:.06em; color:#CFE9F7;
-  text-shadow:0 1px 3px rgba(0,0,0,.8);
+  text-shadow:0 1px 3px rgba(0,0,0,.85);
 }
 .hud-tl-app b{color:var(--signal)}
 .rec{
   position:absolute; top:12px; right:16px; z-index:3; display:flex; align-items:center; gap:5px;
   font-family:var(--mono); font-size:10px; letter-spacing:.1em; color:#FFD9D0;
+  text-shadow:0 1px 3px rgba(0,0,0,.85);
 }
 .rec i{width:6px; height:6px; border-radius:50%; background:var(--hot); animation:pulse 1.4s infinite}
 @keyframes pulse{50%{opacity:.25}}
 
-.stick{position:absolute; z-index:3; background:rgba(9,12,20,.5); border:1px solid rgba(255,255,255,.14); backdrop-filter:blur(2px)}
-.stick i{position:absolute; background:var(--signal); border-radius:50%; box-shadow:0 0 10px rgba(76,201,240,.75)}
+.stick{position:absolute; z-index:3; background:rgba(9,12,20,.42); border:1px solid rgba(255,255,255,.16); backdrop-filter:blur(3px); box-shadow:0 2px 8px rgba(0,0,0,.35) inset}
+.stick i{position:absolute; background:radial-gradient(circle at 40% 35%, #8fe0ff, var(--signal)); border-radius:50%; box-shadow:0 0 12px rgba(76,201,240,.8), 0 2px 4px rgba(0,0,0,.4)}
 .stick.vert{left:18px; top:20%; width:26px; height:60%; border-radius:14px}
 .stick.vert i{left:4px; width:18px; height:18px; top:50%; margin-top:-9px; transition:top .35s ease}
 .stick.horz{right:18px; bottom:16px; width:42%; height:26px; border-radius:14px}
@@ -392,10 +426,11 @@ model-viewer{
 .trap{
   width:34px; height:34px; border-radius:50%; display:grid; place-items:center;
   font-family:var(--mono); font-size:9.5px; color:#BFD8E8;
-  background:rgba(9,12,20,.55); border:1px solid rgba(255,255,255,.16);
+  background:rgba(9,12,20,.5); border:1px solid rgba(255,255,255,.18);
+  box-shadow:0 2px 6px rgba(0,0,0,.35);
   transition:background .2s, color .2s, box-shadow .2s;
 }
-.trap.fire{background:var(--hot); color:#fff; box-shadow:0 0 14px rgba(255,92,57,.75)}
+.trap.fire{background:var(--hot); color:#fff; box-shadow:0 0 16px rgba(255,92,57,.8)}
 
 /* stage phases */
 .soft-stage.s2 .ide{transform:translate(-50%,-50%) scale(1.01)}
@@ -787,6 +822,22 @@ digitalWrite(13, LOW);
 delay(1000);</pre>
             </div>
             <div class="ide-editor">
+              <div class="ide-gutter" aria-hidden="true">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16</div>
               <pre class="code" id="ideCode"></pre>
             </div>
           </div>
@@ -800,57 +851,88 @@ delay(1000);</pre>
 
         <!-- ---------- PhygitalMachines (Android) ---------- -->
         <div class="app phone" id="phoneApp">
-          <div class="phone-screen">
-            <!-- first-person view from the car's camera -->
-            <svg class="fpv" viewBox="0 0 760 350" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-              <defs>
-                <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" stop-color="#141A2B"/><stop offset="1" stop-color="#1E2740"/>
-                </linearGradient>
-                <linearGradient id="road" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0" stop-color="#20222E"/><stop offset="1" stop-color="#2C2F3E"/>
-                </linearGradient>
-              </defs>
-              <rect width="760" height="132" fill="url(#sky)"/>
-              <rect y="132" width="760" height="218" fill="url(#road)"/>
-              <!-- verge either side of the track, converging on the horizon -->
-              <polygon points="380,132 150,350 -40,350" fill="#171A24"/>
-              <polygon points="380,132 610,350 800,350" fill="#171A24"/>
-              <polyline points="380,132 154,350" stroke="#4CC9F0" stroke-width="3" fill="none" opacity=".85"/>
-              <polyline points="380,132 606,350" stroke="#4CC9F0" stroke-width="3" fill="none" opacity=".85"/>
-              <!-- dashed centre line, spacing opens up toward the camera -->
-              <g stroke="#EEF1F8" stroke-width="4" opacity=".85">
-                <line x1="380" y1="144" x2="380" y2="156"/>
-                <line x1="380" y1="172" x2="380" y2="192"/>
-                <line x1="380" y1="214" x2="380" y2="246"/>
-                <line x1="380" y1="272" x2="380" y2="318"/>
-              </g>
-              <!-- rival car ahead -->
-              <g transform="translate(380 196)">
-                <ellipse cx="0" cy="26" rx="44" ry="6" fill="#0A0C12" opacity=".55"/>
-                <rect x="-40" y="-2" width="80" height="28" rx="10" fill="#2A2547"/>
-                <rect x="-29" y="-18" width="58" height="21" rx="8" fill="#332C55"/>
-                <rect x="-24" y="-14" width="48" height="13" rx="5" fill="#0E1220" opacity=".85"/>
-                <circle cx="-27" cy="18" r="5.5" fill="#FF5C39"/>
-                <circle cx="27" cy="18" r="5.5" fill="#FF5C39"/>
-                <rect x="-32" y="-25" width="64" height="5" rx="2" fill="#1B1B2C"/>
-              </g>
-            </svg>
+          <div class="phone-body">
+            <div class="phone-screen">
+              <span class="phone-notch"></span>
+              <!-- first-person view from the car's camera -->
+              <svg class="fpv" viewBox="0 0 760 350" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+                <defs>
+                  <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#0E1424"/><stop offset="1" stop-color="#243055"/>
+                  </linearGradient>
+                  <linearGradient id="road" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#232634"/><stop offset="1" stop-color="#2E3242"/>
+                  </linearGradient>
+                  <linearGradient id="fog" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0" stop-color="#2A3A63" stop-opacity=".9"/>
+                    <stop offset="1" stop-color="#2A3A63" stop-opacity="0"/>
+                  </linearGradient>
+                  <radialGradient id="vign" cx="50%" cy="46%" r="62%">
+                    <stop offset="60%" stop-color="#000" stop-opacity="0"/>
+                    <stop offset="100%" stop-color="#000" stop-opacity=".5"/>
+                  </radialGradient>
+                </defs>
+                <!-- sky + horizon glow -->
+                <rect width="760" height="140" fill="url(#sky)"/>
+                <rect y="96" width="760" height="70" fill="url(#fog)"/>
+                <!-- tarmac -->
+                <rect y="140" width="760" height="210" fill="url(#road)"/>
+                <!-- side verges -->
+                <polygon points="380,140 120,350 -80,350" fill="#1A1D28"/>
+                <polygon points="380,140 640,350 840,350" fill="#1A1D28"/>
+                <!-- perspective grid lines on the tarmac -->
+                <g stroke="#4CC9F0" stroke-width="1" opacity=".14" fill="none">
+                  <path d="M380 140 L60 350"/><path d="M380 140 L250 350"/>
+                  <path d="M380 140 L510 350"/><path d="M380 140 L700 350"/>
+                  <path d="M40 350 Q380 300 720 350"/>
+                  <path d="M120 258 Q380 232 640 258"/>
+                  <path d="M188 196 Q380 182 572 196"/>
+                </g>
+                <!-- glowing cyan kerbs -->
+                <polyline points="380,140 124,350" stroke="#4CC9F0" stroke-width="3.5" fill="none" opacity=".9"/>
+                <polyline points="380,140 636,350" stroke="#4CC9F0" stroke-width="3.5" fill="none" opacity=".9"/>
+                <!-- guardrails behind the kerbs -->
+                <polyline points="380,140 96,340" stroke="#586079" stroke-width="2" fill="none" opacity=".5"/>
+                <polyline points="380,140 664,340" stroke="#586079" stroke-width="2" fill="none" opacity=".5"/>
+                <!-- dashed centre line -->
+                <g stroke="#EEF1F8" stroke-width="4" opacity=".85">
+                  <line x1="380" y1="150" x2="380" y2="162"/>
+                  <line x1="380" y1="178" x2="380" y2="198"/>
+                  <line x1="380" y1="220" x2="380" y2="252"/>
+                  <line x1="380" y1="280" x2="380" y2="330"/>
+                </g>
+                <!-- rival car ahead, with soft ground shadow -->
+                <g transform="translate(380 206)">
+                  <ellipse cx="0" cy="30" rx="52" ry="8" fill="#000" opacity=".45"/>
+                  <rect x="-42" y="-2" width="84" height="30" rx="11" fill="#2A2547"/>
+                  <rect x="-42" y="12" width="84" height="16" rx="8" fill="#211D3A"/>
+                  <rect x="-30" y="-19" width="60" height="22" rx="9" fill="#372F5C"/>
+                  <rect x="-25" y="-15" width="50" height="15" rx="5" fill="#0E1220" opacity=".9"/>
+                  <rect x="-34" y="-27" width="68" height="6" rx="2" fill="#1B1B2C"/>
+                  <circle cx="-29" cy="21" r="6" fill="#FF5C39"/><circle cx="-29" cy="21" r="9" fill="#FF5C39" opacity=".3"/>
+                  <circle cx="29" cy="21" r="6" fill="#FF5C39"/><circle cx="29" cy="21" r="9" fill="#FF5C39" opacity=".3"/>
+                </g>
+                <!-- lens vignette -->
+                <rect width="760" height="350" fill="url(#vign)"/>
+              </svg>
 
-            <!-- HUD -->
-            <div class="hud-tl-app"><b id="fpsOut">58</b> FPS · <span>RSSI −41 dBm</span></div>
-            <div class="rec"><i></i>LIVE</div>
+              <!-- HUD -->
+              <div class="hud-tl-app"><b id="fpsOut">58</b> FPS · <span>RSSI −41 dBm</span></div>
+              <div class="rec"><i></i>LIVE</div>
 
-            <!-- vertical throttle on the left -->
-            <div class="stick vert"><i id="throttle"></i></div>
-            <!-- three trap buttons above the steering slider -->
-            <div class="traps">
-              <span class="trap" id="trap1">01</span>
-              <span class="trap" id="trap2">02</span>
-              <span class="trap" id="trap3">03</span>
+              <!-- vertical throttle on the left -->
+              <div class="stick vert"><i id="throttle"></i></div>
+              <!-- three trap buttons above the steering slider -->
+              <div class="traps">
+                <span class="trap" id="trap1">01</span>
+                <span class="trap" id="trap2">02</span>
+                <span class="trap" id="trap3">03</span>
+              </div>
+              <!-- horizontal steering at the bottom -->
+              <div class="stick horz"><i id="steer"></i></div>
+
+              <span class="phone-glare"></span>
             </div>
-            <!-- horizontal steering at the bottom -->
-            <div class="stick horz"><i id="steer"></i></div>
           </div>
         </div>
 
