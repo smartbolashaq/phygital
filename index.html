@@ -419,7 +419,12 @@ model-viewer{
   border:1px solid var(--rule); border-radius:2px; overflow:hidden;
   background:radial-gradient(ellipse at 50% 64%, rgba(76,201,240,.08), transparent 62%), var(--void);
 }
+.ess-road{
+  position:absolute; inset:0; width:100%; height:100%; z-index:0;
+  pointer-events:none;
+}
 .ess-stage model-viewer{
+  position:relative; z-index:1;
   width:100%; height:100%; background:transparent;
   --poster-color:transparent; pointer-events:none;   /* no mouse control */
 }
@@ -613,6 +618,43 @@ model-viewer{
     <div class="ess-stage" id="essStage">
       <span class="corner tl"></span><span class="corner tr"></span>
       <span class="corner bl"></span><span class="corner br"></span>
+      <!-- Perspective road drawn behind the car. model-viewer renders on a
+           transparent canvas, so this shows through and can't fail on internal
+           three.js APIs. The dashes scroll upward on scroll for a sense of motion. -->
+      <svg class="ess-road" id="essRoad" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <defs>
+          <linearGradient id="essGround" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#0C0E16"/>
+            <stop offset="1" stop-color="#141824"/>
+          </linearGradient>
+          <linearGradient id="essFade" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#08090F" stop-opacity="1"/>
+            <stop offset=".45" stop-color="#08090F" stop-opacity="0"/>
+          </linearGradient>
+          <clipPath id="essClip">
+            <polygon points="255,210 345,210 560,600 40,600"/>
+          </clipPath>
+        </defs>
+        <rect width="600" height="600" fill="url(#essGround)"/>
+        <!-- tarmac trapezoid converging at the horizon (y=210) -->
+        <polygon points="255,210 345,210 560,600 40,600" fill="#171B26"/>
+        <!-- glowing cyan kerbs -->
+        <line x1="255" y1="210" x2="40" y2="600" stroke="#4CC9F0" stroke-width="4" opacity=".85"/>
+        <line x1="345" y1="210" x2="560" y2="600" stroke="#4CC9F0" stroke-width="4" opacity=".85"/>
+        <!-- scrolling dashed centre line, clipped to the tarmac. Evenly spaced so
+             the 120-unit wrap is seamless; scrolls down = forward motion. -->
+        <g id="essDashes" clip-path="url(#essClip)" stroke="#EEF1F8" stroke-width="6" opacity=".8">
+          <line x1="300" y1="30" x2="300" y2="66"/>
+          <line x1="300" y1="150" x2="300" y2="186"/>
+          <line x1="300" y1="270" x2="300" y2="306"/>
+          <line x1="300" y1="390" x2="300" y2="426"/>
+          <line x1="300" y1="510" x2="300" y2="546"/>
+          <line x1="300" y1="630" x2="300" y2="666"/>
+          <line x1="300" y1="750" x2="300" y2="786"/>
+        </g>
+        <!-- haze fading the horizon into the background -->
+        <rect width="600" height="270" fill="url(#essFade)"/>
+      </svg>
       <!-- car sits still; the road scrolls beneath it. No mouse control here:
            the model moves only by the scroll script. -->
       <model-viewer id="mvEssence"
@@ -1371,23 +1413,30 @@ delay(1000);</pre>
     });
   }
 
-  /* ---------- essence section: car on a road that scrolls beneath it ---------- */
-  var mvEssence = document.getElementById('mvEssence');
+  /* ---------- essence section: car on a road that scrolls beneath it ----------
+     The road is an SVG behind the transparent model-viewer, so nothing here
+     depends on model-viewer's internal THREE scene — it always renders. The
+     dashed centre line scrolls upward to sell forward motion. */
   var essStage = document.getElementById('essStage');
   var essNeedle = document.getElementById('essNeedle');
   var essKmh = document.getElementById('essKmh');
+  var essDashes = document.getElementById('essDashes');
 
-  var essScene = null, roadMat = null, roadTex = null, essRender = null;
-  var roadOffset = 0, lastEssP = 0, lastEssT = 0;
+  var dashOffset = 0, lastEssP = 0, lastEssT = 0;
   var essVisible = false, essPumping = false;
 
-  /* keep rendering frames while the section is on-screen so the road keeps
-     flowing even when the user pauses scrolling */
+  /* the dash pattern repeats every ~120 units in viewBox space; wrapping the
+     offset there keeps the scroll seamless */
+  function paintDashes(){
+    if (essDashes) essDashes.setAttribute('transform', 'translate(0 ' + (dashOffset % 120).toFixed(1) + ')');
+  }
+
+  /* keep the dashes flowing while the section is on-screen, even if the user
+     pauses scrolling */
   function essPump(){
     if (!essPumping) return;
-    roadOffset -= 0.004;
-    if (roadTex && roadTex.offset) { roadTex.offset.set(0, roadOffset); roadTex.needsUpdate = true; }
-    if (essRender) essRender();
+    dashOffset += 1.1;
+    paintDashes();
     if (essVisible) requestAnimationFrame(essPump);
     else essPumping = false;
   }
@@ -1396,107 +1445,15 @@ delay(1000);</pre>
     essPumping = true; requestAnimationFrame(essPump);
   }
 
-  /* Build the road procedurally inside model-viewer's own THREE scene. We can't
-     import THREE separately (that risks a second copy and instanceof breakage),
-     so we harvest the constructors we need from objects already in the scene. */
-  function buildRoad(){
-    if (!mvEssence || essScene) return;
-    try {
-      var sym = Object.getOwnPropertySymbols(mvEssence)
-                      .find(function(s){ return s.description === 'scene'; });
-      var scene = sym ? mvEssence[sym] : null;
-      if (!scene || typeof scene.traverse !== 'function') return;
-
-      /* find a mesh to borrow THREE classes from */
-      var sample = null;
-      scene.traverse(function(o){ if (!sample && o.isMesh) sample = o; });
-      if (!sample) return;
-
-      var Mesh = sample.constructor;
-      var Geom = sample.geometry.constructor;                 // BufferGeometry
-      var mat0 = Array.isArray(sample.material) ? sample.material[0] : sample.material;
-      var Mat  = mat0.constructor;                            // a Standard/Physical material
-      /* reach Object3D + math + texture classes through prototypes / instances */
-      var Vector3 = sample.position.constructor;
-      var Euler   = sample.rotation.constructor;
-
-      /* ----- canvas texture: dark asphalt, cyan edge lines, dashed centre ----- */
-      var cv = document.createElement('canvas');
-      cv.width = 256; cv.height = 1024;
-      var ctx = cv.getContext('2d');
-      ctx.fillStyle = '#191B24'; ctx.fillRect(0, 0, 256, 1024);
-      /* faint asphalt speckle */
-      for (var i = 0; i < 1400; i++){
-        ctx.fillStyle = 'rgba(255,255,255,' + (Math.random()*0.03).toFixed(3) + ')';
-        ctx.fillRect(Math.random()*256, Math.random()*1024, 1.5, 1.5);
-      }
-      /* cyan glowing edges */
-      ctx.strokeStyle = '#4CC9F0'; ctx.lineWidth = 6; ctx.shadowColor = '#4CC9F0'; ctx.shadowBlur = 12;
-      ctx.beginPath(); ctx.moveTo(26,0);  ctx.lineTo(26,1024);  ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(230,0); ctx.lineTo(230,1024); ctx.stroke();
-      ctx.shadowBlur = 0;
-      /* dashed centre line */
-      ctx.fillStyle = '#EEF1F8';
-      for (var y = 40; y < 1024; y += 150) ctx.fillRect(122, y, 12, 84);
-
-      /* find a texture class already used in the model, else derive from image */
-      var TexCtor = null;
-      scene.traverse(function(o){
-        if (TexCtor) return;
-        var m = o.isMesh ? (Array.isArray(o.material)?o.material[0]:o.material) : null;
-        if (m && m.map && m.map.constructor) TexCtor = m.map.constructor;
-      });
-      if (!TexCtor) return;   // no texture ctor reachable — skip road, car still shows
-      roadTex = new TexCtor(cv);
-      roadTex.needsUpdate = true;
-      /* wrap so we can scroll it vertically */
-      roadTex.wrapS = roadTex.wrapT = 1000;   // RepeatWrapping
-      roadTex.repeat && roadTex.repeat.set(1, 3);
-
-      roadMat = new Mat();
-      roadMat.map = roadTex;
-      if ('roughness' in roadMat) roadMat.roughness = 0.9;
-      if ('metalness' in roadMat) roadMat.metalness = 0.0;
-      roadMat.needsUpdate = true;
-
-      /* a flat quad built from a BufferGeometry (PlaneGeometry may be out of reach) */
-      var g = new Geom();
-      var W = 0.42, L = 1.6;   // road width / length in model units
-      var verts = new Float32Array([
-        -W, 0, -L,   W, 0, -L,   W, 0, L,
-        -W, 0, -L,   W, 0, L,   -W, 0, L
-      ]);
-      var uvs = new Float32Array([ 0,0, 1,0, 1,1, 0,0, 1,1, 0,1 ]);
-      var nrm = new Float32Array([ 0,1,0, 0,1,0, 0,1,0, 0,1,0, 0,1,0, 0,1,0 ]);
-      var AttrCtor = sample.geometry.getAttribute('position').constructor;
-      g.setAttribute('position', new AttrCtor(verts, 3));
-      g.setAttribute('uv', new AttrCtor(uvs, 2));
-      g.setAttribute('normal', new AttrCtor(nrm, 3));
-
-      var road = new Mesh(g, roadMat);
-      road.position.y = -0.02;      // just under the wheels
-      road.renderOrder = -1;
-      scene.add(road);
-
-      essScene = scene;
-      essRender = function(){
-        if (typeof scene.queueRender === 'function') scene.queueRender();
-      };
-      onEssence();
-    } catch (e) { /* internal API — degrade to car with no road */ }
-  }
-  if (mvEssence) mvEssence.addEventListener('load', buildRoad);
-
   function onEssence(){
     if (!essStage) return;
     var r = essStage.getBoundingClientRect();
     var vh = window.innerHeight || 1;
-    /* section counts as visible when any part is in the viewport */
     essVisible = r.bottom > 0 && r.top < vh;
     if (essVisible) essKick();
 
     /* progress based on the stage's own position in the viewport */
-    var p = 1 - (r.top + r.height * 0.5) / vh;    // ~0 when entering, ~1 when leaving
+    var p = 1 - (r.top + r.height * 0.5) / vh;    // ~0 entering, ~1 leaving
     p = Math.min(1, Math.max(0, p));
 
     /* speed: how fast the section is being scrolled through, smoothed */
@@ -1506,13 +1463,9 @@ delay(1000);</pre>
     lastEssP = p; lastEssT = now;
     var speed = Math.min(1, Math.abs(dp) / dt * 900);
 
-    if (roadTex && roadTex.offset) {
-      /* extra scroll from velocity on top of the steady flow from the pump */
-      roadOffset -= speed * 0.05;
-      roadTex.offset.set(0, roadOffset);
-      roadTex.needsUpdate = true;
-      if (essRender) essRender();
-    }
+    /* extra flow from scroll velocity on top of the steady pump */
+    dashOffset += speed * 30;
+    paintDashes();
 
     /* speedometer readout */
     var kmh = Math.round(18 + p * 42 + speed * 60);
