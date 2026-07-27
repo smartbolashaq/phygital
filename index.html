@@ -410,6 +410,33 @@ model-viewer{
 .soft-meta svg{width:14px; height:14px; color:var(--signal); flex:none}
 .soft-meta .soon{margin-left:6px; color:#5C6480}
 
+/* ---------- drive section: top-down descent -> pivot -> park ---------- */
+.pin-wrap.drive{height:420svh}
+.pin-wrap.drive .wrap{width:100%; max-width:1760px; padding:0 44px}
+.drive-stage{
+  position:relative; width:100%; height:min(84svh,860px); overflow:hidden;
+  border:1px solid var(--rule); border-radius:2px;
+  background:radial-gradient(ellipse at 50% 46%, rgba(76,201,240,.06), transparent 66%), var(--void);
+}
+.trails{position:absolute; inset:0; width:100%; height:100%; z-index:1; pointer-events:none}
+.trails path{fill:none; stroke:var(--signal); stroke-width:3; stroke-linecap:round}
+.trails .glow{stroke-width:9; opacity:.35}
+
+.drive-car{
+  position:absolute; left:50%; top:0; width:min(360px,42%);
+  transform:translate(-50%,-50%); z-index:2; will-change:top,transform;
+}
+.drive-car model-viewer{width:100%; height:min(360px,42vw); background:transparent}
+
+.drive-copy{
+  position:absolute; left:44px; bottom:40px; z-index:3; max-width:44ch;
+  opacity:0; transform:translateY(14px); transition:opacity .6s ease, transform .6s ease;
+}
+.drive-copy.on{opacity:1; transform:none}
+.drive-copy h2{font-size:clamp(28px,4vw,52px); text-transform:uppercase; margin:14px 0 12px}
+.drive-copy h2 em{font-style:normal; color:var(--signal)}
+.drive-copy p{font-size:16px}
+
 /* ---------- telemetry readout strip ---------- */
 .telem{
   display:flex; gap:0; border:1px solid var(--rule); border-radius:2px;
@@ -570,6 +597,41 @@ model-viewer{
     </div>
   </div>
 </section>
+
+<!-- ============ ПРОЕЗД: машина сверху -> разворот -> стоп ============ -->
+<div class="pin-wrap drive" id="driveWrap">
+  <div class="pin">
+    <div class="wrap">
+      <div class="drive-stage" id="driveStage">
+        <span class="corner tl"></span><span class="corner tr"></span>
+        <span class="corner bl"></span><span class="corner br"></span>
+
+        <!-- neon wheel trails, drawn beneath the car as it descends -->
+        <svg class="trails" id="trails" aria-hidden="true"></svg>
+
+        <div class="drive-car" id="driveCarBox">
+          <model-viewer id="mvDrive"
+            src="models/car1.glb"
+            alt="Машина едет по трассе"
+            camera-controls disable-zoom interaction-prompt="none"
+            shadow-intensity="1" exposure="1.05" environment-image="neutral"
+            camera-orbit="0deg 5deg 105%" field-of-view="26deg"
+            min-camera-orbit="auto 5deg auto" max-camera-orbit="auto 78deg auto">
+          </model-viewer>
+        </div>
+
+        <div class="drive-copy" id="driveCopy">
+          <div class="eyebrow">Заезд</div>
+          <h2 id="driveTitle">Пишешь код — <em>машина едет</em></h2>
+          <p id="driveText">Реальная гоночная платформа выполняет твою программу на трассе. Прокрути, чтобы разглядеть её.</p>
+        </div>
+
+        <div class="stage-tag">Проезд&nbsp;<b id="driveStep">старт</b></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 <!-- ============ ЧТО ЭТО ============ -->
 <section class="band">
@@ -1326,12 +1388,120 @@ delay(1000);</pre>
     });
   }
 
+  /* ---------- drive section: top-down descent -> pivot -> park ---------- */
+  var driveWrap = document.getElementById('driveWrap');
+  var driveStage = document.getElementById('driveStage');
+  var driveCarBox = document.getElementById('driveCarBox');
+  var mvDrive = document.getElementById('mvDrive');
+  var trails = document.getElementById('trails');
+  var driveCopy = document.getElementById('driveCopy');
+  var driveTitle = document.getElementById('driveTitle');
+  var driveText = document.getElementById('driveText');
+  var driveStep = document.getElementById('driveStep');
+
+  /* The car travels from top to a resting point; the neon trails are built by
+     sampling its wheel positions along that path. Path geometry is deterministic
+     from the scroll ratio, so we can render the whole trail up to the current
+     point every frame instead of accumulating state. */
+  var DRIVE_TOP = 0.14, DRIVE_REST = 0.66;   // car centre as fraction of stage height
+  var TRAIL_HALF = 0.055;                     // wheel offset from centre, fraction of width
+
+  function carCentreY(p){
+    /* descends during phase 1-2, then holds */
+    var t = Math.min(1, p / 0.62);
+    var e = t < .5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2)/2;   // ease in-out
+    return DRIVE_TOP + (DRIVE_REST - DRIVE_TOP) * e;
+  }
+
+  var DRIVE_COPY = [
+    ['\u041f\u0438\u0448\u0435\u0448\u044c \u043a\u043e\u0434 \u2014 <em>\u043c\u0430\u0448\u0438\u043d\u0430 \u0435\u0434\u0435\u0442</em>',
+     '\u0420\u0435\u0430\u043b\u044c\u043d\u0430\u044f \u0433\u043e\u043d\u043e\u0447\u043d\u0430\u044f \u043f\u043b\u0430\u0442\u0444\u043e\u0440\u043c\u0430 \u0432\u044b\u043f\u043e\u043b\u043d\u044f\u0435\u0442 \u0442\u0432\u043e\u044e \u043f\u0440\u043e\u0433\u0440\u0430\u043c\u043c\u0443 \u043d\u0430 \u0442\u0440\u0430\u0441\u0441\u0435.',
+     '\u0441\u0442\u0430\u0440\u0442'],
+    ['\u0420\u0430\u0437\u0432\u043e\u0440\u043e\u0442 <em>\u043a\u0430\u043c\u0435\u0440\u044b</em>',
+     '\u0412\u0438\u0434 \u0441\u0432\u0435\u0440\u0445\u0443 \u043f\u043b\u0430\u0432\u043d\u043e \u043f\u0435\u0440\u0435\u0445\u043e\u0434\u0438\u0442 \u043a \u043e\u0431\u0437\u043e\u0440\u0443 \u0441\u0431\u043e\u043a\u0443.',
+     '\u0440\u0430\u0437\u0432\u043e\u0440\u043e\u0442'],
+    ['\u041c\u0430\u0448\u0438\u043d\u0430 \u2014 <em>\u0442\u0432\u043e\u044f</em>',
+     '\u041e\u0441\u0442\u0430\u043d\u043e\u0432\u0438\u043b\u0430\u0441\u044c. \u041f\u043e\u0442\u044f\u043d\u0438 \u043c\u044b\u0448\u044c\u044e \u2014 \u043c\u043e\u0434\u0435\u043b\u044c \u0432\u0440\u0430\u0449\u0430\u0435\u0442\u0441\u044f.',
+     '\u0441\u0442\u043e\u043f']
+  ];
+  var lastDrivePhase = -1, driveUserControl = false;
+
+  if (mvDrive) {
+    mvDrive.addEventListener('pointerdown', function(){ driveUserControl = true; }, {passive:true});
+  }
+
+  function drawTrails(p, W, H){
+    if (!trails) return;
+    trails.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    var restP = 0.62;
+    var upto = Math.min(p, restP);
+    var steps = 46;
+    var cx = W * 0.5;
+    var offset = W * TRAIL_HALF;
+    var L = [], R = [];
+    for (var i = 0; i <= steps; i++) {
+      var pp = (upto / steps) * i;
+      var y = carCentreY(pp) * H;
+      /* trail starts just behind the car body */
+      L.push((cx - offset).toFixed(1) + ',' + y.toFixed(1));
+      R.push((cx + offset).toFixed(1) + ',' + y.toFixed(1));
+    }
+    /* fade the whole trail out as the camera pivots away from top-down */
+    var fade = 1 - Math.min(1, Math.max(0, (p - 0.62) / 0.22));
+    trails.style.opacity = fade.toFixed(2);
+    var dL = 'M' + L.join(' L');
+    var dR = 'M' + R.join(' L');
+    trails.innerHTML =
+      '<path class="glow" d="' + dL + '"/>' +
+      '<path class="glow" d="' + dR + '"/>' +
+      '<path d="' + dL + '"/>' +
+      '<path d="' + dR + '"/>';
+  }
+
+  function onDrive(){
+    if (!driveWrap || !driveStage) return;
+    var r = driveWrap.getBoundingClientRect();
+    var total = r.height - window.innerHeight;
+    var p = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 0;
+    var W = driveStage.clientWidth, H = driveStage.clientHeight;
+    if (!W || !H) return;
+
+    /* move the car down the stage, growing a touch as it "approaches" */
+    if (driveCarBox) {
+      var cy = carCentreY(p);
+      driveCarBox.style.top = (cy * 100) + '%';
+      var grow = 0.9 + Math.min(1, p / 0.62) * 0.18;   // 0.90 -> 1.08
+      driveCarBox.style.transform = 'translate(-50%,-50%) scale(' + grow.toFixed(3) + ')';
+    }
+
+    /* camera pivots from straight-down (5deg) to a rear-quarter view (68deg)
+       across phase 1-2, then holds so the user can take over */
+    if (mvDrive && !driveUserControl && !reduce) {
+      var pv = Math.min(1, p / 0.62);
+      var phi = 5 + pv * 63;                 // 5deg (top) -> 68deg (side)
+      var theta = pv * 20;                   // slight turn as it settles
+      mvDrive.setAttribute('camera-orbit', theta.toFixed(1) + 'deg ' + phi.toFixed(1) + 'deg 105%');
+    }
+
+    drawTrails(p, W, H);
+
+    var phase = p > 0.66 ? 2 : (p > 0.30 ? 1 : 0);
+    if (driveCopy) driveCopy.classList.toggle('on', true);
+    if (phase !== lastDrivePhase) {
+      lastDrivePhase = phase;
+      if (driveTitle) driveTitle.innerHTML = DRIVE_COPY[phase][0];
+      if (driveText) driveText.textContent = DRIVE_COPY[phase][1];
+      if (driveStep) driveStep.textContent = DRIVE_COPY[phase][2];
+    }
+  }
+
   var ticking = false;
   window.addEventListener('scroll', function(){
-    if (!ticking) { window.requestAnimationFrame(function(){ onScroll(); onExplode(); onSoft(); ticking = false; }); ticking = true; }
+    if (!ticking) { window.requestAnimationFrame(function(){ onScroll(); onDrive(); onExplode(); onSoft(); ticking = false; }); ticking = true; }
   }, {passive:true});
-  window.addEventListener('resize', function(){ onScroll(); onExplode(); onSoft(); }, {passive:true});
+  window.addEventListener('resize', function(){ onScroll(); onDrive(); onExplode(); onSoft(); }, {passive:true});
   onScroll();
+  onDrive();
   onExplode();
   onSoft();
 
