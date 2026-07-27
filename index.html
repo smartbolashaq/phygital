@@ -410,39 +410,38 @@ model-viewer{
 .soft-meta svg{width:14px; height:14px; color:var(--signal); flex:none}
 .soft-meta .soon{margin-left:6px; color:#5C6480}
 
-/* ---------- essence section: text + car on a moving road ---------- */
+/* ---------- essence section: text + track photo ---------- */
 .essence .ess-grid{
   display:grid; grid-template-columns:1fr 1fr; gap:52px; align-items:center;
 }
 .ess-stage{
   position:relative; width:100%; height:min(60svh,560px);
   border:1px solid var(--rule); border-radius:2px; overflow:hidden;
-  background:radial-gradient(ellipse at 50% 64%, rgba(76,201,240,.08), transparent 62%), var(--void);
+  background:var(--void);
 }
-.ess-road{
-  position:absolute; inset:0; width:100%; height:100%; z-index:0;
-  pointer-events:none;
+.ess-photo{
+  position:absolute; inset:0; width:100%; height:100%;
+  object-fit:cover; transform:scale(1.06); transform-origin:60% 50%;
+  will-change:transform;
 }
-.ess-stage model-viewer{
-  position:relative; z-index:1;
-  width:100%; height:100%; background:transparent;
-  --poster-color:transparent; pointer-events:none;   /* no mouse control */
+/* scrim: darken toward the edges so the photo sits in the dark section and the
+   frame corners stay legible */
+.ess-scrim{
+  position:absolute; inset:0; pointer-events:none;
+  background:
+    linear-gradient(180deg, rgba(8,9,15,.55), transparent 22%, transparent 72%, rgba(8,9,15,.65)),
+    radial-gradient(ellipse at 55% 50%, transparent 55%, rgba(8,9,15,.5));
 }
-.ess-speed{
-  position:absolute; left:14px; bottom:12px; z-index:3; pointer-events:none;
-  font-family:var(--mono); font-size:11px; letter-spacing:.1em; color:var(--muted);
-  display:flex; align-items:center; gap:8px;
-}
-.ess-speed b{color:var(--signal); font-size:15px; font-weight:700}
-.ess-speed i{
-  display:block; width:34px; height:3px; border-radius:2px;
-  background:linear-gradient(90deg,var(--signal),var(--hot));
-  transform-origin:left center; transform:scaleX(.05); transition:transform .2s ease;
+.ess-badge{
+  position:absolute; left:14px; bottom:12px; z-index:2; pointer-events:none;
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; color:var(--muted);
+  background:rgba(8,9,15,.6); border:1px solid var(--rule);
+  padding:5px 10px; border-radius:2px; backdrop-filter:blur(3px);
 }
 
 @media(max-width:940px){
   .essence .ess-grid{grid-template-columns:1fr; gap:30px}
-  .ess-stage{height:52svh}
+  .ess-stage{height:44svh}
 }
 
 /* ---------- telemetry readout strip ---------- */
@@ -618,53 +617,12 @@ model-viewer{
     <div class="ess-stage" id="essStage">
       <span class="corner tl"></span><span class="corner tr"></span>
       <span class="corner bl"></span><span class="corner br"></span>
-      <!-- Perspective road drawn behind the car. model-viewer renders on a
-           transparent canvas, so this shows through and can't fail on internal
-           three.js APIs. The dashes scroll upward on scroll for a sense of motion. -->
-      <svg class="ess-road" id="essRoad" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-        <defs>
-          <linearGradient id="essGround" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#0C0E16"/>
-            <stop offset="1" stop-color="#141824"/>
-          </linearGradient>
-          <linearGradient id="essFade" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#08090F" stop-opacity="1"/>
-            <stop offset=".45" stop-color="#08090F" stop-opacity="0"/>
-          </linearGradient>
-          <clipPath id="essClip">
-            <polygon points="255,210 345,210 560,600 40,600"/>
-          </clipPath>
-        </defs>
-        <rect width="600" height="600" fill="url(#essGround)"/>
-        <!-- tarmac trapezoid converging at the horizon (y=210) -->
-        <polygon points="255,210 345,210 560,600 40,600" fill="#171B26"/>
-        <!-- glowing cyan kerbs -->
-        <line x1="255" y1="210" x2="40" y2="600" stroke="#4CC9F0" stroke-width="4" opacity=".85"/>
-        <line x1="345" y1="210" x2="560" y2="600" stroke="#4CC9F0" stroke-width="4" opacity=".85"/>
-        <!-- scrolling dashed centre line, clipped to the tarmac. Evenly spaced so
-             the 120-unit wrap is seamless; scrolls down = forward motion. -->
-        <g id="essDashes" clip-path="url(#essClip)" stroke="#EEF1F8" stroke-width="6" opacity=".8">
-          <line x1="300" y1="30" x2="300" y2="66"/>
-          <line x1="300" y1="150" x2="300" y2="186"/>
-          <line x1="300" y1="270" x2="300" y2="306"/>
-          <line x1="300" y1="390" x2="300" y2="426"/>
-          <line x1="300" y1="510" x2="300" y2="546"/>
-          <line x1="300" y1="630" x2="300" y2="666"/>
-          <line x1="300" y1="750" x2="300" y2="786"/>
-        </g>
-        <!-- haze fading the horizon into the background -->
-        <rect width="600" height="270" fill="url(#essFade)"/>
-      </svg>
-      <!-- car sits still; the road scrolls beneath it. No mouse control here:
-           the model moves only by the scroll script. -->
-      <model-viewer id="mvEssence"
-        src="models/car1.glb"
-        alt="Машина на гоночной трассе"
-        disable-zoom disable-pan disable-tap interaction-prompt="none"
-        shadow-intensity="0.9" exposure="1.05" environment-image="neutral"
-        camera-orbit="26deg 72deg 105%" field-of-view="28deg">
-      </model-viewer>
-      <div class="ess-speed"><i id="essNeedle"></i><b id="essKmh">0</b> км/ч</div>
+      <!-- product photo of the cars on a track; a scrim keeps it readable in
+           the dark section -->
+      <img class="ess-photo" src="img/track.jpg"
+           alt="Гоночные машины Phygital на трассе в спортзале" loading="lazy">
+      <div class="ess-scrim"></div>
+      <div class="ess-badge">Реальная трасса · школьный зал</div>
     </div>
   </div>
 </section>
@@ -1413,64 +1371,20 @@ delay(1000);</pre>
     });
   }
 
-  /* ---------- essence section: car on a road that scrolls beneath it ----------
-     The road is an SVG behind the transparent model-viewer, so nothing here
-     depends on model-viewer's internal THREE scene — it always renders. The
-     dashed centre line scrolls upward to sell forward motion. */
+  /* ---------- essence section: subtle parallax on the track photo ---------- */
   var essStage = document.getElementById('essStage');
-  var essNeedle = document.getElementById('essNeedle');
-  var essKmh = document.getElementById('essKmh');
-  var essDashes = document.getElementById('essDashes');
-
-  var dashOffset = 0, lastEssP = 0, lastEssT = 0;
-  var essVisible = false, essPumping = false;
-
-  /* the dash pattern repeats every ~120 units in viewBox space; wrapping the
-     offset there keeps the scroll seamless */
-  function paintDashes(){
-    if (essDashes) essDashes.setAttribute('transform', 'translate(0 ' + (dashOffset % 120).toFixed(1) + ')');
-  }
-
-  /* keep the dashes flowing while the section is on-screen, even if the user
-     pauses scrolling */
-  function essPump(){
-    if (!essPumping) return;
-    dashOffset += 1.1;
-    paintDashes();
-    if (essVisible) requestAnimationFrame(essPump);
-    else essPumping = false;
-  }
-  function essKick(){
-    if (!essVisible || essPumping) return;
-    essPumping = true; requestAnimationFrame(essPump);
-  }
+  var essPhoto = essStage ? essStage.querySelector('.ess-photo') : null;
 
   function onEssence(){
-    if (!essStage) return;
+    if (!essStage || !essPhoto) return;
     var r = essStage.getBoundingClientRect();
     var vh = window.innerHeight || 1;
-    essVisible = r.bottom > 0 && r.top < vh;
-    if (essVisible) essKick();
-
-    /* progress based on the stage's own position in the viewport */
-    var p = 1 - (r.top + r.height * 0.5) / vh;    // ~0 entering, ~1 leaving
-    p = Math.min(1, Math.max(0, p));
-
-    /* speed: how fast the section is being scrolled through, smoothed */
-    var now = performance.now();
-    var dp = p - lastEssP;
-    var dt = Math.max(16, now - lastEssT);
-    lastEssP = p; lastEssT = now;
-    var speed = Math.min(1, Math.abs(dp) / dt * 900);
-
-    /* extra flow from scroll velocity on top of the steady pump */
-    dashOffset += speed * 30;
-    paintDashes();
-
-    /* speedometer readout */
-    var kmh = Math.round(18 + p * 42 + speed * 60);
-    if (essKmh) essKmh.textContent = String(kmh);
-    if (essNeedle) essNeedle.style.transform = 'scaleX(' + (0.05 + Math.min(1, kmh/120) * 0.95).toFixed(2) + ')';
+    if (r.bottom < 0 || r.top > vh) return;
+    /* -1 (below) .. 1 (above) as the section passes through the viewport */
+    var t = (r.top + r.height * 0.5 - vh * 0.5) / vh;
+    /* gentle zoom + drift so the photo feels alive without distracting */
+    var scale = 1.06 + Math.max(0, -t) * 0.04;
+    essPhoto.style.transform = 'scale(' + scale.toFixed(3) + ') translateY(' + (t * -14).toFixed(1) + 'px)';
   }
 
   var ticking = false;
