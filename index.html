@@ -432,12 +432,6 @@ model-viewer{
     linear-gradient(180deg, rgba(8,9,15,.55), transparent 22%, transparent 72%, rgba(8,9,15,.65)),
     radial-gradient(ellipse at 55% 50%, transparent 55%, rgba(8,9,15,.5));
 }
-.ess-badge{
-  position:absolute; left:14px; bottom:12px; z-index:2; pointer-events:none;
-  font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; color:var(--muted);
-  background:rgba(8,9,15,.6); border:1px solid var(--rule);
-  padding:5px 10px; border-radius:2px; backdrop-filter:blur(3px);
-}
 
 @media(max-width:940px){
   .essence .ess-grid{grid-template-columns:1fr; gap:30px}
@@ -469,23 +463,32 @@ model-viewer{
 .row p{font-size:15.5px}
 
 /* ---------- skills / chips ---------- */
-.chips{display:flex; flex-wrap:wrap; gap:10px; margin-top:12px}
+.chips{display:flex; flex-wrap:wrap; gap:12px; margin-top:12px}
 .chip{
+  display:inline-flex; align-items:center; gap:9px;
   font-family:var(--mono); font-size:12px; letter-spacing:.06em;
-  border:1px solid var(--rule); padding:11px 16px; border-radius:2px;
+  border:1px solid var(--rule); padding:12px 18px; border-radius:2px;
   color:var(--muted); background:var(--panel); transition:.25s;
 }
-.chip:hover{border-color:var(--signal); color:var(--text)}
+.chip svg{width:17px; height:17px; color:var(--signal); flex:none; transition:color .25s}
+.chip:hover{border-color:var(--signal); color:var(--text); background:#12151F}
+.chip:hover svg{color:var(--hot)}
 
-.skill-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(268px,1fr)); gap:1px; background:var(--rule); border:1px solid var(--rule)}
+/* exactly 3 columns so 6 cards fill two full rows — no empty cells */
+.skill-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--rule); border:1px solid var(--rule)}
 .skill{background:var(--void); padding:30px 26px; transition:background .3s}
 .skill:hover{background:var(--panel)}
-.skill i{
-  display:block; width:24px; height:2px; background:var(--hot);
-  margin-bottom:18px; font-style:normal;
+.skill:hover .skill-ic{border-color:var(--signal); color:var(--signal)}
+.skill-ic{
+  display:grid; place-items:center; width:44px; height:44px;
+  border:1px solid var(--rule); border-radius:8px; color:var(--hot);
+  margin-bottom:18px; transition:border-color .3s, color .3s;
 }
+.skill-ic svg{width:24px; height:24px}
 .skill h3{font-size:18px; text-transform:uppercase; margin-bottom:9px; letter-spacing:0}
 .skill p{font-size:14.5px}
+@media(max-width:900px){ .skill-grid{grid-template-columns:repeat(2,1fr)} }
+@media(max-width:560px){ .skill-grid{grid-template-columns:1fr} }
 
 /* ---------- split section with model ---------- */
 .split{display:grid; grid-template-columns:1fr 1fr; gap:52px; align-items:center}
@@ -622,7 +625,6 @@ model-viewer{
       <img class="ess-photo" src="img/track.jpg"
            alt="Гоночные машины Phygital на трассе в спортзале" loading="lazy">
       <div class="ess-scrim"></div>
-      <div class="ess-badge">Реальная трасса · школьный зал</div>
     </div>
   </div>
 </section>
@@ -871,12 +873,30 @@ delay(1000);</pre>
       <h2>Чему учится ребёнок</h2>
     </div>
     <div class="skill-grid reveal">
-      <div class="skill"><i></i><h3>Программирование</h3><p>Микроконтроллеры, логика, отладка кода.</p></div>
-      <div class="skill"><i></i><h3>Электроника</h3><p>Основы схемотехники, питание, подключение модулей.</p></div>
-      <div class="skill"><i></i><h3>Датчики и приводы</h3><p>Сигналы, сервоприводы, индикация.</p></div>
-      <div class="skill"><i></i><h3>Механическая сборка</h3><p>Компоновка, обслуживание, инженерия узлов.</p></div>
-      <div class="skill"><i></i><h3>Беспроводные технологии</h3><p>Передача команд и видеопотока.</p></div>
-      <div class="skill"><i></i><h3>Инженерное мышление</h3><p>Гипотеза, испытание, доработка.</p></div>
+      <div class="skill">
+        <span class="skill-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8l-4 4 4 4M16 8l4 4-4 4M13 5l-2 14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <h3>Программирование</h3><p>Микроконтроллеры, логика, отладка кода.</p>
+      </div>
+      <div class="skill">
+        <span class="skill-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14h4l2-5 3 9 2-6h5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="18" cy="6" r="1.6" fill="currentColor"/></svg></span>
+        <h3>Электроника</h3><p>Основы схемотехники, питание, подключение модулей.</p>
+      </div>
+      <div class="skill">
+        <span class="skill-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+        <h3>Датчики и приводы</h3><p>Сигналы, сервоприводы, индикация.</p>
+      </div>
+      <div class="skill">
+        <span class="skill-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 0 5.4-5.4l-2.3 2.3-2-2 2.3-2.3z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></span>
+        <h3>Механическая сборка</h3><p>Компоновка, обслуживание, инженерия узлов.</p>
+      </div>
+      <div class="skill">
+        <span class="skill-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13a7 7 0 0 1 14 0M8.5 15.5a3.5 3.5 0 0 1 7 0M12 18h.01" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+        <h3>Беспроводные технологии</h3><p>Передача команд и видеопотока.</p>
+      </div>
+      <div class="skill">
+        <span class="skill-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a5 5 0 0 1 3 9v2H9v-2a5 5 0 0 1 3-9zM9 18h6M10 21h4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <h3>Инженерное мышление</h3><p>Гипотеза, испытание, доработка.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -889,12 +909,12 @@ delay(1000);</pre>
       <h2>Один комплекс —<br><em>много площадок</em></h2>
     </div>
     <div class="chips reveal">
-      <span class="chip">Школы</span>
-      <span class="chip">Колледжи</span>
-      <span class="chip">STEM-центры</span>
-      <span class="chip">Кружки робототехники</span>
-      <span class="chip">Инженерные классы</span>
-      <span class="chip">Турниры и хакатоны</span>
+      <span class="chip"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21V9l9-5 9 5v12M9 21v-6h6v6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>Школы</span>
+      <span class="chip"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 2 9l10 5 10-5-10-5zM6 11v5l6 3 6-3v-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>Колледжи</span>
+      <span class="chip"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3v6l-5 9a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3l-5-9V3M8 3h8M8 14h8" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>STEM-центры</span>
+      <span class="chip"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="10" width="8" height="6" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 10V7M9 7h6M6 13H4M20 13h-2M10 19v1M14 19v1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>Кружки робототехники</span>
+      <span class="chip"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V6a2 2 0 0 1 2-2h9l5 5v11M15 4v5h5M8 13h8M8 17h5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Инженерные классы</span>
+      <span class="chip"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v3a4 4 0 0 1-8 0V4zM8 5H5v2a3 3 0 0 0 3 3M16 5h3v2a3 3 0 0 1-3 3M10 14h4M9 20h6M12 14v3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Турниры и хакатоны</span>
     </div>
   </div>
 </section>
