@@ -508,13 +508,39 @@ model-viewer{
   background:var(--panel); transition:border-color .3s, transform .3s;
 }
 .track-card:hover{border-color:var(--signal); transform:translateY(-3px)}
-/* big render on a dark stage */
-.track-hero{aspect-ratio:16/9; overflow:hidden; background:#0A0B10}
-.track-hero img{width:100%; height:100%; object-fit:cover; transition:transform .6s ease}
-.track-card:hover .track-hero img{transform:scale(1.03)}
-/* two smaller "in the gym" previews */
-.track-thumbs{display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--rule)}
-.track-thumbs img{width:100%; aspect-ratio:16/10; object-fit:cover; display:block; background:#0A0B10}
+
+/* carousel: one slide visible, rest slide in from the side */
+.carousel{position:relative; aspect-ratio:16/9; overflow:hidden; background:#0A0B10}
+.carousel-track{
+  display:flex; height:100%;
+  transition:transform .5s cubic-bezier(.4,.0,.2,1);
+}
+.carousel-track img{width:100%; height:100%; flex:none; object-fit:cover}
+.carousel-arrow{
+  position:absolute; top:50%; transform:translateY(-50%); z-index:3;
+  width:40px; height:40px; display:grid; place-items:center; cursor:pointer;
+  border:1px solid rgba(255,255,255,.2); border-radius:50%;
+  background:rgba(8,9,15,.5); backdrop-filter:blur(6px); color:#EAF6FE;
+  opacity:0; transition:opacity .3s, background .2s, border-color .2s, transform .2s;
+}
+.carousel-arrow svg{width:20px; height:20px}
+.carousel-arrow.prev{left:12px}
+.carousel-arrow.next{right:12px}
+.carousel-arrow:hover{background:var(--signal); border-color:var(--signal); color:#04121A}
+.carousel-arrow:active{transform:translateY(-50%) scale(.92)}
+.carousel:hover .carousel-arrow{opacity:1}
+/* keep arrows visible on touch devices where there is no hover */
+@media(hover:none){ .carousel-arrow{opacity:1} }
+.carousel-dots{
+  position:absolute; left:0; right:0; bottom:12px; z-index:3;
+  display:flex; justify-content:center; gap:7px; pointer-events:none;
+}
+.carousel-dots span{
+  width:7px; height:7px; border-radius:50%;
+  background:rgba(255,255,255,.35); transition:background .3s, width .3s;
+}
+.carousel-dots span.on{background:var(--signal); width:18px; border-radius:4px}
+
 .track-body{padding:22px 24px 24px}
 .track-body h3{font-size:20px; text-transform:uppercase; letter-spacing:.02em; margin-bottom:8px; color:var(--signal)}
 .track-body p{font-size:14.5px; color:var(--muted); max-width:46ch}
@@ -1021,10 +1047,19 @@ delay(1000);</pre>
     <div class="track-grid reveal">
       <!-- модульная -->
       <article class="track-card">
-        <div class="track-hero"><img src="img/track-modular-hero.jpg" alt="Модульная трасса — рендер" loading="lazy"></div>
-        <div class="track-thumbs">
-          <img src="img/track-modular-top.jpg" alt="Модульная трасса, вид сверху" loading="lazy">
-          <img src="img/track-modular.jpg" alt="Модульная трасса в зале" loading="lazy">
+        <div class="carousel" data-slide="0">
+          <div class="carousel-track">
+            <img src="img/track-modular-hero.jpg" alt="Модульная трасса — рендер" loading="lazy">
+            <img src="img/track-modular.jpg" alt="Модульная трасса в зале" loading="lazy">
+            <img src="img/track-modular-top.jpg" alt="Модульная трасса, вид сверху" loading="lazy">
+          </div>
+          <button class="carousel-arrow prev" type="button" aria-label="Предыдущий слайд">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="carousel-arrow next" type="button" aria-label="Следующий слайд">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="carousel-dots"><span class="on"></span><span></span><span></span></div>
         </div>
         <div class="track-body">
           <h3>Модульная</h3>
@@ -1036,10 +1071,19 @@ delay(1000);</pre>
       </article>
       <!-- статичная -->
       <article class="track-card">
-        <div class="track-hero"><img src="img/track-static-hero.jpg" alt="Статичная трасса с мостом — рендер" loading="lazy"></div>
-        <div class="track-thumbs">
-          <img src="img/track-static-top.jpg" alt="Статичная трасса, вид сверху" loading="lazy">
-          <img src="img/track-static.jpg" alt="Статичная трасса в зале" loading="lazy">
+        <div class="carousel" data-slide="0">
+          <div class="carousel-track">
+            <img src="img/track-static-hero.jpg" alt="Статичная трасса с мостом — рендер" loading="lazy">
+            <img src="img/track-static.jpg" alt="Статичная трасса в зале" loading="lazy">
+            <img src="img/track-static-top.jpg" alt="Статичная трасса, вид сверху" loading="lazy">
+          </div>
+          <button class="carousel-arrow prev" type="button" aria-label="Предыдущий слайд">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="carousel-arrow next" type="button" aria-label="Следующий слайд">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="carousel-dots"><span class="on"></span><span></span><span></span></div>
         </div>
         <div class="track-body">
           <h3>Статичная</h3>
@@ -1580,6 +1624,36 @@ delay(1000);</pre>
   } else {
     document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('in'); });
   }
+
+  /* ---------- track carousels ---------- */
+  document.querySelectorAll('.carousel').forEach(function(car){
+    var track = car.querySelector('.carousel-track');
+    var slides = track.children.length;
+    var dots = car.querySelectorAll('.carousel-dots span');
+    var i = 0;
+    function go(n){
+      i = (n + slides) % slides;          /* wrap around */
+      track.style.transform = 'translateX(' + (-i * 100) + '%)';
+      dots.forEach(function(d, k){ d.classList.toggle('on', k === i); });
+    }
+    car.querySelector('.prev').addEventListener('click', function(){ go(i - 1); });
+    car.querySelector('.next').addEventListener('click', function(){ go(i + 1); });
+    /* keyboard when the carousel is focused/hovered */
+    car.setAttribute('tabindex', '0');
+    car.addEventListener('keydown', function(e){
+      if (e.key === 'ArrowLeft'){ go(i - 1); e.preventDefault(); }
+      if (e.key === 'ArrowRight'){ go(i + 1); e.preventDefault(); }
+    });
+    /* touch swipe */
+    var x0 = null;
+    car.addEventListener('touchstart', function(e){ x0 = e.touches[0].clientX; }, {passive:true});
+    car.addEventListener('touchend', function(e){
+      if (x0 === null) return;
+      var dx = e.changedTouches[0].clientX - x0;
+      if (Math.abs(dx) > 40){ go(dx < 0 ? i + 1 : i - 1); }
+      x0 = null;
+    }, {passive:true});
+  });
 
   /* ---------- idle drift on the hero model (stops on interaction) ---------- */
   if (hero && !reduce) {
