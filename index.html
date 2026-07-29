@@ -507,31 +507,16 @@ model-viewer{
   border:1px solid var(--rule); border-radius:3px; overflow:hidden;
   background:var(--panel); transition:border-color .3s, transform .3s;
 }
-.track-card:hover, .track-card:focus-visible{border-color:var(--signal); transform:translateY(-3px); outline:none}
-.track-media{position:relative; aspect-ratio:16/9; overflow:hidden; background:var(--void)}
-.track-media img{
-  position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
-  transition:opacity .6s ease, transform 6s ease;
-}
-.tm-front{opacity:1}
-.tm-back{opacity:0}
-/* hover / focus / touch-active swaps the perspective for the top-down view */
-.track-card:hover .tm-front,
-.track-card:focus-visible .tm-front,
-.track-card.flip .tm-front{opacity:0}
-.track-card:hover .tm-back,
-.track-card:focus-visible .tm-back,
-.track-card.flip .tm-back{opacity:1; transform:scale(1.04)}
-.track-flip{
-  position:absolute; right:12px; bottom:12px; z-index:2; pointer-events:none;
-  font-family:var(--mono); font-size:10px; letter-spacing:.08em; color:#CFE9F7;
-  background:rgba(8,9,15,.62); border:1px solid rgba(255,255,255,.12);
-  padding:5px 10px; border-radius:2px; backdrop-filter:blur(3px);
-  opacity:.85; transition:opacity .3s;
-}
-.track-card:hover .track-flip, .track-card:focus-visible .track-flip{opacity:0}
+.track-card:hover{border-color:var(--signal); transform:translateY(-3px)}
+/* big render on a dark stage */
+.track-hero{aspect-ratio:16/9; overflow:hidden; background:#0A0B10}
+.track-hero img{width:100%; height:100%; object-fit:cover; transition:transform .6s ease}
+.track-card:hover .track-hero img{transform:scale(1.03)}
+/* two smaller "in the gym" previews */
+.track-thumbs{display:grid; grid-template-columns:1fr 1fr; gap:1px; background:var(--rule)}
+.track-thumbs img{width:100%; aspect-ratio:16/10; object-fit:cover; display:block; background:#0A0B10}
 .track-body{padding:22px 24px 24px}
-.track-body h3{font-size:20px; text-transform:uppercase; letter-spacing:.02em; margin-bottom:8px}
+.track-body h3{font-size:20px; text-transform:uppercase; letter-spacing:.02em; margin-bottom:8px; color:var(--signal)}
 .track-body p{font-size:14.5px; color:var(--muted); max-width:46ch}
 .track-tags{display:flex; flex-wrap:wrap; gap:8px; margin-top:16px}
 .track-tags span{
@@ -1035,11 +1020,11 @@ delay(1000);</pre>
     </div>
     <div class="track-grid reveal">
       <!-- модульная -->
-      <article class="track-card" tabindex="0">
-        <div class="track-media">
-          <img class="tm-front" src="img/track-modular.jpg" alt="Модульная трасса в зале" loading="lazy">
-          <img class="tm-back" src="img/track-modular-top.jpg" alt="Модульная трасса, вид сверху" loading="lazy">
-          <span class="track-flip">Вид сверху →</span>
+      <article class="track-card">
+        <div class="track-hero"><img src="img/track-modular-hero.jpg" alt="Модульная трасса — рендер" loading="lazy"></div>
+        <div class="track-thumbs">
+          <img src="img/track-modular-top.jpg" alt="Модульная трасса, вид сверху" loading="lazy">
+          <img src="img/track-modular.jpg" alt="Модульная трасса в зале" loading="lazy">
         </div>
         <div class="track-body">
           <h3>Модульная</h3>
@@ -1050,11 +1035,11 @@ delay(1000);</pre>
         </div>
       </article>
       <!-- статичная -->
-      <article class="track-card" tabindex="0">
-        <div class="track-media">
-          <img class="tm-front" src="img/track-static.jpg" alt="Статичная трасса с мостом" loading="lazy">
-          <img class="tm-back" src="img/track-static-top.jpg" alt="Статичная трасса, вид сверху" loading="lazy">
-          <span class="track-flip">Вид сверху →</span>
+      <article class="track-card">
+        <div class="track-hero"><img src="img/track-static-hero.jpg" alt="Статичная трасса с мостом — рендер" loading="lazy"></div>
+        <div class="track-thumbs">
+          <img src="img/track-static-top.jpg" alt="Статичная трасса, вид сверху" loading="lazy">
+          <img src="img/track-static.jpg" alt="Статичная трасса в зале" loading="lazy">
         </div>
         <div class="track-body">
           <h3>Статичная</h3>
@@ -1594,19 +1579,6 @@ delay(1000);</pre>
     document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
   } else {
     document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('in'); });
-  }
-
-  /* ---------- track cards: on touch devices there's no hover, so gently
-       auto-alternate between the perspective and the top-down view ---------- */
-  var noHover = window.matchMedia('(hover: none)').matches;
-  if (noHover) {
-    var trackCards = document.querySelectorAll('.track-card');
-    trackCards.forEach(function(card, idx){
-      /* stagger the two cards so they don't flip in unison */
-      setTimeout(function(){
-        setInterval(function(){ card.classList.toggle('flip'); }, 3600);
-      }, idx * 1800);
-    });
   }
 
   /* ---------- idle drift on the hero model (stops on interaction) ---------- */
